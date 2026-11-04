@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import PrimaryButton from "@/components/ui/primary-button"
 import SecondaryButton from "@/components/ui/secondary-button"
 import Link from "next/link"
-import { Film, Eye, Mail, FlaskConical, MailX, NotebookPen, CalendarDays, FolderGit2, ShieldCheck, Lightbulb, GitCommitHorizontal, Bot, Clock } from "lucide-react"
+import { Film, Eye, Mail, FlaskConical, MailX, NotebookPen, CalendarDays, FolderGit2, ShieldCheck, Lightbulb, GitCommitHorizontal, Bot, Clock, Users } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Fellows Program - Humanitarians AI",
@@ -24,6 +24,39 @@ export default function FellowsPage() {
           <p className="text-xl text-muted-foreground mb-8">
             Join our global community of talented volunteers dedicated to using AI for humanitarian causes. The Fellows Program offers hands-on experience with cutting-edge AI projects, professional development, and networking opportunities with like-minded innovators committed to positive impact.
           </p>
+
+          {/* Renewal rules, kept above the fold */}
+          <div role="note" aria-labelledby="renewal-rules-heading" className="p-6 md:p-8 border-2 border-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
+            <h2 id="renewal-rules-heading" className="flex items-center gap-3 text-2xl font-bold mb-4">
+              <CalendarDays className="w-7 h-7 shrink-0 text-primary" aria-hidden="true" />
+              Renewals are your responsibility
+            </h2>
+            <ul className="space-y-3 mb-4 text-lg">
+              <li className="flex gap-3">
+                <Clock className="w-5 h-5 mt-1 shrink-0 text-primary" aria-hidden="true" />
+                <span>
+                  <strong>Request your renewal at least one week (7 days) before your current agreement ends.</strong>{" "}
+                  Later requests may not be approved in time, and agreements are never backdated.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <Users className="w-5 h-5 mt-1 shrink-0 text-primary" aria-hidden="true" />
+                <span>
+                  <strong>CC your Project Manager</strong> (the person you report to) on every renewal email,
+                  along with hr@humanitarians.ai and bear@humanitarians.ai.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <Mail className="w-5 h-5 mt-1 shrink-0 text-primary" aria-hidden="true" />
+                <span>
+                  Send it Monday to Wednesday, business hours. Track your own end date: no one will remind you.
+                </span>
+              </li>
+            </ul>
+            <a href="#requesting-renewals" className="font-bold underline underline-offset-4 text-primary hover:text-primary/80">
+              How to request a renewal
+            </a>
+          </div>
 
           <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-8">
             <iframe
@@ -102,7 +135,8 @@ export default function FellowsPage() {
               <a href="#frictional-logs" className="underline underline-offset-4 text-foreground hover:text-primary">
                 Frictional log
               </a>
-              ) and to have developed a clear plan for their research.
+              ) and to have developed a clear plan for their research. Request it at least one week before your
+              agreement ends, with your Project Manager on CC.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -115,11 +149,15 @@ export default function FellowsPage() {
 
           <section id="requesting-renewals" aria-labelledby="renewals-heading" className="scroll-mt-24 p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
             <h2 id="renewals-heading" className="text-2xl font-bold mb-4">Requesting a Fellowship Renewal</h2>
+            <p className="mb-4">
+              <strong>Request your renewal at least one week (7 days) before your current agreement ends.</strong> Renewals
+              require approval, and agreements are not backdated.
+            </p>
             <p className="text-muted-foreground mb-4">
               Send your renewal request to <a href="mailto:hr@humanitarians.ai" className="underline underline-offset-4 text-foreground hover:text-primary">hr@humanitarians.ai</a> and{" "}
-              <a href="mailto:bear@humanitarians.ai" className="underline underline-offset-4 text-foreground hover:text-primary">bear@humanitarians.ai</a>, with
-              your current Project Manager (the person you report to) on CC, before your current agreement expires, Monday to Wednesday during business hours. Renewals require approval;
-              agreements are not backdated.
+              <a href="mailto:bear@humanitarians.ai" className="underline underline-offset-4 text-foreground hover:text-primary">bear@humanitarians.ai</a>, and{" "}
+              <strong className="text-foreground">CC your current Project Manager (the person you report to)</strong>. Send it
+              Monday to Wednesday during business hours.
             </p>
             <p className="text-muted-foreground mb-4">
               Before you send your request, watch the renewal videos in the{" "}
@@ -154,7 +192,7 @@ export default function FellowsPage() {
               <h3 className="text-lg font-bold mb-3">Copy this email format</h3>
               <div className="space-y-3 text-sm break-words">
                 <p><strong>To:</strong> hr@humanitarians.ai; bear@humanitarians.ai</p>
-                <p><strong>CC:</strong> Your current Project Manager who you report to</p>
+                <p><strong>CC (required):</strong> Your current Project Manager who you report to</p>
                 <p><strong>Subject:</strong> Fellowship renewal — [Name] — [Project] — [Requested dates]</p>
                 <p><strong>Markdown renewal report:</strong> [Direct GitHub link to the report in your fellows folder.]</p>
                 <p><strong>Request:</strong> Please renew my fellowship from [date] through [date]. My current agreement
@@ -206,6 +244,39 @@ export default function FellowsPage() {
             </p>
           </section>
 
+          {/* Authorship on papers */}
+          <section id="authorship" aria-labelledby="authorship-heading" className="scroll-mt-24 p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
+            <h2 id="authorship-heading" className="text-2xl font-bold mb-4">Authorship on Papers</h2>
+            <p className="mb-4">
+              <strong>Our expectation: the Humanitarians AI mentors are the last authors on every paper.</strong>
+            </p>
+            <p className="text-muted-foreground mb-4">
+              For the general rules we follow Yale&apos;s{" "}
+              <a
+                href="https://provost.yale.edu/policies/academic-integrity/guidance-authorship-scholarly-or-scientific-publications"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 text-foreground hover:text-primary"
+              >
+                Guidance on Authorship in Scholarly or Scientific Publications
+              </a>
+              . In short:
+            </p>
+            <ul className="list-disc space-y-2 pl-6 mb-4 text-muted-foreground marker:text-primary">
+              <li><strong className="text-foreground">Authors must contribute.</strong> Meaningful, substantive intellectual input: planning, analysis or interpretation, and writing or revising the manuscript.</li>
+              <li><strong className="text-foreground">Every author approves the final version</strong> and can take public responsibility for the work, including answering questions about its accuracy and integrity.</li>
+              <li><strong className="text-foreground">The lead author</strong> usually did the central work and drafted the paper. They confirm that every listed author qualifies and are usually the corresponding author.</li>
+              <li><strong className="text-foreground">No gift or courtesy authorship.</strong> Seniority, running the lab, or routine technical help does not earn a byline. Those people are acknowledged instead.</li>
+              <li><strong className="text-foreground">No ghostwriting.</strong> Anyone who wrote significant text is named as an author or acknowledged. Authorship is never bought or sold.</li>
+              <li><strong className="text-foreground">Acknowledge</strong> valuable non-author contributions and every funding source, and disclose related financial interests.</li>
+              <li><strong className="text-foreground">Talk about authorship early.</strong> Settle who is an author, and in what order, at the start of the project, not at submission.</li>
+            </ul>
+            <p className="text-sm text-muted-foreground">
+              Yale&apos;s guidance sets who qualifies as an author. Author order, including mentors in the last position,
+              is Humanitarians AI&apos;s own expectation. Confirm the order with your Project Manager before you draft.
+            </p>
+          </section>
+
           {/* Application and OPT agreement information */}
           <div className="p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
             <h2 className="text-2xl font-bold mb-4">Application and OPT Agreement Information</h2>
@@ -224,7 +295,7 @@ export default function FellowsPage() {
               <li>
                 Initial agreements are for one month. If a renewal is approved, subsequent agreements run for two to
                 three months. Volunteers are solely responsible for tracking their agreement dates and requesting
-                renewals on time.
+                renewals on time, at least one week before the current agreement ends, with their Project Manager on CC.
               </li>
               <li>
                 For SEVP reporting guidance, contact Northeastern University&apos;s Office of Global Services (OGS) or
