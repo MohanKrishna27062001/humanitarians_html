@@ -37,5 +37,10 @@ export default async function LedgerPage() {
     )
   }
 
-  return <LedgerWidget />
+  return (
+    <>
+      <p className="px-4 pt-4 text-sm"><Link href="/ledger/grants" className="underline underline-offset-4">Grant opportunities</Link></p>
+      <LedgerWidget />
+    </>
+  )
 }
