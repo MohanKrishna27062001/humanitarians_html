@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveDecision, GrantError } from '@/lib/grants'
 import { getLedgerViewer, ledgerDenied } from '@/lib/ledger-viewer'
+import { sameOriginMutation } from '@/lib/developer-access-core'
 
 // Records one decision (pursue, applied, ...) and a note for a grant.
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!sameOriginMutation(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const viewer = await getLedgerViewer(req)
   if (typeof viewer === 'string') return ledgerDenied(viewer)
+  if (viewer.readOnly) return NextResponse.json({ error: 'Developer grant access is read-only.' }, { status: 403 })
   const { id } = await params
   try {
     let body: unknown

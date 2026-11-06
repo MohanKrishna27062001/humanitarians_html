@@ -54,6 +54,7 @@ export function parseDecisionUpdate(body: unknown): { decision: Decision; notes:
 }
 
 export async function saveDecision(id: string, body: unknown, viewer: Viewer): Promise<void> {
+  if (viewer.readOnly) throw new GrantError('Developer grant access is read-only.', 403)
   const { decision, notes } = parseDecisionUpdate(body)
   const saved = (await sql`
     UPDATE public.grant_opportunities
