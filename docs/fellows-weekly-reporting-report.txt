@@ -1,0 +1,33 @@
+Fellows page weekly reporting update — 2026-11-10
+
+Changed source: app/fellows/page.tsx
+Validation snapshot recorded before publication. These changes are included in this repository commit; production deployment status is separate.
+
+EDIT LOCATIONS
+- app/fellows/page.tsx:29 — Added the exact five-step Start here checklist immediately after the opening paragraph and before Renewals are your responsibility. Linked the fellows repository, reporting requirements, renewal instructions, and HR email.
+- app/fellows/page.tsx:115 — Replaced During your trial month and After the first month blocks with the exact Reporting requirements copy, including weekly obligations throughout the fellowship, trial-month hour allocation, and renewals. Kept the joining introduction, HR invitation, and following buttons.
+- app/fellows/page.tsx:150 — Added requesting-a-renewal to the existing renewal heading, retaining its existing title and heading level. Updated page links to this anchor; the prior requesting-renewals section anchor still works.
+- app/fellows/page.tsx:233 — Changed trial-month-only video wording to Include both required videos for every week.
+- app/fellows/page.tsx:226 — Updated the weekly evidence index row to specify project-repository commits or pull requests.
+- app/fellows/page.tsx:185 — Updated What to include to specify commits or pull requests in the project repository.
+- app/fellows/page.tsx:428 — Added the exact diary sentence to the first Frictional Logs paragraph.
+- app/fellows/page.tsx:431 — Replaced the no-standing-impact language with the exact ungraded-but-required-weekly sentence.
+- app/fellows/page.tsx:501 — Added the exact weekly FRICTIONAL.md instruction to the first Where it goes item.
+- app/fellows/page.tsx:567 — Simplified the Our Projects sentence to match what the Projects page actually provides.
+- app/fellows/page.tsx:414 — Moved the existing frictional-logs anchor to its heading. All four requested heading anchors use scroll-mt-24, giving 96px clearance for the 64px sticky header.
+- Removed the now-unused Film and Eye icon imports. No other source file changed in this task.
+
+VALIDATION
+- Focused ESLint check of app/fellows/page.tsx: passed with no errors or warnings, using the temporary lint tools prepared in the preceding task.
+- Production build: passed. First attempt hit a stale temporary webpack-cache error; rebuilding in a fresh temporary .next directory succeeded.
+- Browser: 16 direct anchor/theme/viewport combinations passed (four headings, light/dark, 375px/1440px). No heading hidden by the sticky header, no horizontal page overflow, and no browser exceptions.
+- Compared the rendered text of Start here and Reporting requirements against the two exact Markdown blocks in the brief: exact match after formatting/whitespace normalization.
+- Verified all seven smaller copy edits, the retained joining buttons, and removal of obsolete trial-only video and no-standing-impact language.
+- Byte comparison confirmed authorship, OPT/authorization/SEVP, and email-policy sections unchanged. Header and footer were not edited.
+- Only hr@humanitarians.ai and bear@humanitarians.ai appear as email addresses on the page. No Project Manager or supervisor names added.
+- The existing renewal recipients, seven-day rule, and Monday-to-Wednesday rule remain unchanged.
+- Evidence: /private/tmp/humanitarians-fellows-evidence/results.json and screenshots in that directory. Build log: /private/tmp/humanitarians-fellows-build.log.
+- Repository-wide lint/type debt reported in the preceding task was outside this single-page edit; the build still uses the repository’s existing skip-lint/type-error settings.
+
+QUOTED TEXT NOT FOUND
+None. All passages were located by content, including those split across JSX elements. The existing renewal heading reads Requesting a Fellowship Renewal; that title was preserved while adding the requested requesting-a-renewal id.

@@ -195,7 +195,7 @@ export default function OpenAIPage() {
       Where creativity meets computation. Madison explores how nonprofits and creatives can use AI to develop compelling brands, campaigns, and stories with impact.
     </p>
     <a href="https://github.com/Humanitariansai/Madison" className="text-primary hover:underline">GitHub Repository →</a>
-    <a href="https://www.humanitarians.ai/madison" className="text-primary hover:underline ml-4">Project Page →</a>
+    <a href="https://madison.humanitarians.ai" className="text-primary hover:underline ml-4">Project Page →</a>
   </div>
   
   <div className="mt-6">
@@ -301,7 +301,7 @@ export default function OpenAIPage() {
       An open-source educational framework built to revolutionize how we learn and teach. Dewey uses specialized AI agents to create interactive, personalized learning across disciplines—rooted in the philosophy of John Dewey. Includes several key projects:
     </p>
     <ul className="list-disc pl-6 mt-2 space-y-1">
-      <li>Medhavi: Intelligent AI books that adapt content to individual learners</li>
+      <li>Medhavy: Intelligent AI books that adapt content to individual learners</li>
       <li>"AI Teaching Revolution" series: Professor Nik Brown's collaboration with OpenAI sharing strategies and tools for AI in classrooms</li>
       <li>Educational video production focused on AI literacy and learning</li>
     </ul>

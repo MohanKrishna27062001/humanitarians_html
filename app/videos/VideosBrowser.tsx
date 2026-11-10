@@ -1,7 +1,8 @@
 'use client'
 
+import ContentLink from "@/components/ContentLink"
+
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Search, X, Pin, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -127,7 +128,7 @@ export default function VideosBrowser({ pinned, videos, slugMap = {} }: { pinned
                   <CardTitle className="text-base flex items-center gap-2">
                     {v.pinned && <Pin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                     {slugMap[v.youtube_id] ? (
-                      <Link href={`/videos/${slugMap[v.youtube_id]}`} className="hover:underline">{v.title}</Link>
+                      <ContentLink href={`/videos/${slugMap[v.youtube_id]}`} className="hover:underline">{v.title}</ContentLink>
                     ) : v.title}
                   </CardTitle>
                   {v.description && (

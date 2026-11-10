@@ -145,7 +145,7 @@ export default function AISkunkworks() {
                 <p className="text-muted-foreground mb-4">
                   An open-source, agent-based AI marketing intelligence framework designed to transform branding, marketing, and advertising through collaborative agent systems.
                 </p>
-                <Link href="/madison" className="text-primary hover:underline">Learn more about Madison →</Link>
+                <Link href="https://madison.humanitarians.ai" className="text-primary hover:underline">Learn more about Madison →</Link>
               </div>
               
               <div className="p-6 border rounded-lg">

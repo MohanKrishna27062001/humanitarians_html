@@ -73,7 +73,7 @@ export default function Ai1Page() {
           </p>
           <OpenHours className="mt-6" />
           <p className="mt-2 text-sm text-muted-foreground">
-            <Link href="/ai1/tools/addams" className="underline hover:text-foreground">Addams — OPT Volunteer Documentation System</Link> is <span className="font-bold">MANDATORY</span> weekly for current volunteers
+            Addams — OPT Volunteer Documentation System is <span className="font-bold">MANDATORY</span> weekly for current volunteers
           </p>
         </div>
 

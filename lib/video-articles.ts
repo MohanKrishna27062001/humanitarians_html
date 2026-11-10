@@ -50,7 +50,19 @@ export interface VideoArticle { frontmatter: ArticleFrontmatter; body: string }
 const CONTENT_DIR = path.join(process.cwd(), 'content', 'videos')
 const TRANSCRIPT_DIR = path.join(process.cwd(), 'data', 'youtube', 'transcripts')
 
-const VIDEOS = videosJson as VideoRecord[]
+// Correct display text while preserving synced source records, URLs, and IDs.
+function platformSpelling(text: string): string {
+  return text.replace(/https?:\/\/\S+|\b(?:medhavi|medavi|madhavi)\b/gi, match =>
+    /^https?:/i.test(match) ? match : 'Medhavy')
+}
+
+const VIDEOS = (videosJson as VideoRecord[]).map(video => ({
+  ...video,
+  title: platformSpelling(video.title),
+  description: platformSpelling(video.description),
+  tags: video.tags.map(platformSpelling),
+  chapters: video.chapters.map(chapter => ({ ...chapter, title: platformSpelling(chapter.title) })),
+}))
 const PLAYLISTS = playlistsJson as PlaylistRecord[]
 const BY_SLUG = new Map(VIDEOS.map(v => [v.slug, v]))
 const BY_ID = new Map(VIDEOS.map(v => [v.id, v]))
@@ -95,7 +107,10 @@ export function getArticle(slug: string): VideoArticle | null {
 export function getTranscript(videoId: string): TranscriptParagraph[] {
   const file = path.join(TRANSCRIPT_DIR, `${videoId}.json`)
   if (!fs.existsSync(file)) return []
-  try { return JSON.parse(fs.readFileSync(file, 'utf-8')) } catch { return [] }
+  try {
+    const paragraphs = JSON.parse(fs.readFileSync(file, 'utf-8')) as TranscriptParagraph[]
+    return paragraphs.map(paragraph => ({ ...paragraph, text: platformSpelling(paragraph.text), title: paragraph.title ? platformSpelling(paragraph.title) : null }))
+  } catch { return [] }
 }
 
 /** Same-playlist videos first, then videos sharing tags, then most recent. */

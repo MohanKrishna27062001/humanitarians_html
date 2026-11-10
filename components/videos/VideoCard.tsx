@@ -1,11 +1,11 @@
-import Link from 'next/link'
+import ContentLink from "@/components/ContentLink"
 import { Clock } from 'lucide-react'
 import type { VideoRecord } from '@/lib/video-articles'
 import { formatDate } from '@/lib/video-articles'
 
 export default function VideoCard({ video, compact = false }: { video: VideoRecord; compact?: boolean }) {
   return (
-    <Link href={`/videos/${video.slug}`} className="group block">
+    <ContentLink block href={`/videos/${video.slug}`} className="group block">
       <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -27,6 +27,6 @@ export default function VideoCard({ video, compact = false }: { video: VideoReco
           {formatDate(video.uploadDate)}
         </p>
       )}
-    </Link>
+    </ContentLink>
   )
 }

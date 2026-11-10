@@ -30,6 +30,9 @@ const nextConfig = {
       'gru-reference.html', 'gru.html', 'tictoc-reference-v2.html', 'walker-unity.html',
     ]
     return [
+      { source: '/80-days-to-stay', destination: 'https://jobs.humanitarians.ai', permanent: true },
+      { source: '/madison', destination: 'https://madison.humanitarians.ai', permanent: true },
+      { source: '/medhavy', destination: 'https://www.medhavy.com', permanent: true },
       // LoonNet (four Godot games, ~170 MB of wasm/pck) lives on its own Vercel
       // project + repo (nikbearbrown/loonnet) so it never bloats this site or
       // its Ad Grants landing pages. 307, not 308, per the note below.

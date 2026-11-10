@@ -91,7 +91,7 @@ export default async function ToolsPage() {
           </p>
           <OpenHours className="mt-6" />
           <p className="mt-2 text-sm text-muted-foreground">
-            <a href="https://www.humanitarians.ai/tools/Addams" className="underline hover:text-foreground">Addams — OPT Volunteer Documentation System</a> is <span className="font-bold">MANDATORY</span> weekly for current volunteers
+            Addams — OPT Volunteer Documentation System is <span className="font-bold">MANDATORY</span> weekly for current volunteers
           </p>
         </div>
 

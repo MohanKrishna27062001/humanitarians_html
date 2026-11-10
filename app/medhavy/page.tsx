@@ -116,7 +116,7 @@ export default function MedhavyPage() {
               </p>
               <div className="mt-8 flex flex-col md:flex-row gap-4 items-start">
                 <a
-                  href="https://www.medhavy.com/"
+                  href="https://www.medhavy.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"

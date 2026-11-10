@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import PrimaryButton from "@/components/ui/primary-button"
 import SecondaryButton from "@/components/ui/secondary-button"
 import Link from "next/link"
-import { Film, Eye, Mail, FlaskConical, MailX, NotebookPen, CalendarDays, FolderGit2, ShieldCheck, Lightbulb, GitCommitHorizontal, Bot, Clock, Users } from "lucide-react"
+import { Mail, FlaskConical, MailX, NotebookPen, CalendarDays, FolderGit2, ShieldCheck, Lightbulb, GitCommitHorizontal, Bot, Clock, Users } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Fellows Program - Humanitarians AI",
@@ -25,7 +25,18 @@ export default function FellowsPage() {
             Join our global community of talented volunteers dedicated to using AI for humanitarian causes. The Fellows Program offers hands-on experience with cutting-edge AI projects, professional development, and networking opportunities with like-minded innovators committed to positive impact.
           </p>
 
-          {/* Renewal rules, kept above the fold */}
+          <section aria-labelledby="start-here" className="p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
+            <h2 id="start-here" className="scroll-mt-24 text-2xl font-bold mb-4">Start here</h2>
+            <ol className="list-decimal space-y-4 pl-6 text-muted-foreground marker:text-primary break-words">
+              <li><strong className="text-foreground">Know your Project Manager.</strong> This is the person you report to every week. You&apos;re told who it is when you join your group. CC them on every renewal request. If you&apos;re not sure who it is, email <a href="mailto:hr@humanitarians.ai" className="underline underline-offset-4 text-foreground hover:text-primary">hr@humanitarians.ai</a> before you start work.</li>
+              <li><strong className="text-foreground">Set up your fellows folder.</strong> In the <a href={FELLOWS_REPO} className="underline underline-offset-4 text-foreground hover:text-primary">fellows repository</a>, create <code className="text-sm break-all">fellows/first-name-last-initial/</code>. Each piece of work gets its own dated folder inside it: <code className="text-sm break-all">YYYY-MM-DD-slug/</code>.</li>
+              <li><strong className="text-foreground">Document your work every week. It&apos;s your evidence for OPT.</strong> That means 20 hours of documented work, two Brutalist videos, a Frictional log entry in each folder you worked in, and your code committed to your project&apos;s repository. The full list, and why it has to be weekly, is under <a href="#reporting-requirements" className="underline underline-offset-4 text-foreground hover:text-primary">Reporting requirements</a>.</li>
+              <li><strong className="text-foreground">Make every video open from a direct link.</strong> Post each video somewhere it opens from a direct link, and check that anyone with the link can view it.</li>
+              <li><strong className="text-foreground">Track your own end date.</strong> Request your renewal at least seven days before your agreement ends. No one will remind you. See <a href="#requesting-a-renewal" className="underline underline-offset-4 text-foreground hover:text-primary">Requesting a renewal</a>.</li>
+            </ol>
+          </section>
+
+          {/* Renewal rules */}
           <div role="note" aria-labelledby="renewal-rules-heading" className="p-6 md:p-8 border-2 border-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
             <h2 id="renewal-rules-heading" className="flex items-center gap-3 text-2xl font-bold mb-4">
               <CalendarDays className="w-7 h-7 shrink-0 text-primary" aria-hidden="true" />
@@ -53,7 +64,7 @@ export default function FellowsPage() {
                 </span>
               </li>
             </ul>
-            <a href="#requesting-renewals" className="font-bold underline underline-offset-4 text-primary hover:text-primary/80">
+            <a href="#requesting-a-renewal" className="font-bold underline underline-offset-4 text-primary hover:text-primary/80">
               How to request a renewal
             </a>
           </div>
@@ -100,55 +111,43 @@ export default function FellowsPage() {
               </p>
             </div>
 
-            <h3 className="text-lg font-bold mb-3">During your trial month</h3>
-            <ul className="space-y-3 mb-6">
-              <li className="flex gap-3">
-                <Film className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
-                <span>
-                  <strong>2 videos per week made with Brutalist</strong> — one on any STEM or AI topic of your
-                  choice, and one on your weekly progress update.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <Eye className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
-                <span>
-                  <strong>Around 10 hours per week</strong> reviewing Brutalist videos.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <FlaskConical className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
-                <span>
-                  <strong>Another 10 or more hours per week</strong> on your research or project work. These hours
-                  can be spent joining meetings on our{" "}
-                  <Link href="/projects" className="underline underline-offset-4 hover:text-primary">
-                    existing projects
-                  </Link>
-                  .
-                </span>
-              </li>
-            </ul>
+            <section aria-labelledby="reporting-requirements" className="mb-6">
+              <h3 id="reporting-requirements" className="scroll-mt-24 text-lg font-bold mb-3">Reporting requirements</h3>
+              <p className="text-muted-foreground mb-4">These are due every week, from your first week to your last.</p>
+              <p className="text-muted-foreground mb-4">
+                <strong className="text-foreground">This is your evidence for OPT.</strong> Every week, you document the work you did that week: your hours, your videos, your Frictional log and your code. Together they&apos;re the dated record, made at the time, that your work is real and related to your degree. A record written each week is worth far more than one reconstructed months later, when the specifics are gone. That&apos;s why these are weekly requirements, not something you put together at renewal time.
+              </p>
+              <p className="text-muted-foreground mb-6">This record supplements whatever your school&apos;s international student office requires; it doesn&apos;t replace it.</p>
 
-            <h3 className="text-lg font-bold mb-3">After the first month</h3>
-            <p className="text-muted-foreground mb-6">
-              To receive a second, renewal letter, Fellows are expected to meet all reporting requirements
-              (including a weekly{" "}
-              <a href="#frictional-logs" className="underline underline-offset-4 text-foreground hover:text-primary">
-                Frictional log
-              </a>
-              ) and to have developed a clear plan for their research. Request it at least one week before your
-              agreement ends, with your Project Manager on CC.
-            </p>
+              <p className="font-bold mb-3">Due every week</p>
+              <ul className="list-disc space-y-3 pl-6 mb-6 text-muted-foreground marker:text-primary">
+                <li><strong className="text-foreground">Hours.</strong> At least 20 hours of work, with a dated record for each week.</li>
+                <li><strong className="text-foreground">Two videos made with Brutalist.</strong> One on any STEM or AI topic you choose, and one progress update on that week&apos;s work. Every week, for your whole fellowship.</li>
+                <li><strong className="text-foreground">Your Frictional log.</strong> A running diary of what you did that week, including what didn&apos;t work. It isn&apos;t graded, but it is required every week. Add a dated entry to the FRICTIONAL.md in every work folder you worked in that week.</li>
+                <li><strong className="text-foreground">Code in the project repository.</strong> If your project has its own GitHub repository, commit your code there as you work, not in one batch at the end. Your fellows folder holds your Frictional log; link from it to the specific commits or pull requests. Code that exists only in the fellows repository, or only on your own machine, doesn&apos;t count as evidence.</li>
+              </ul>
+
+              <p className="font-bold mb-3">During your trial month</p>
+              <p className="text-muted-foreground mb-4">Your 20 hours break down this way:</p>
+              <ul className="list-disc space-y-3 pl-6 mb-6 text-muted-foreground marker:text-primary">
+                <li>About 10 hours a week reviewing Brutalist videos.</li>
+                <li>10 or more hours a week on your research or project work. These hours can include joining meetings on existing projects.</li>
+              </ul>
+
+              <p className="font-bold mb-3">Renewals</p>
+              <p className="text-muted-foreground">Your renewal report links to your weekly records; it doesn&apos;t replace them. To be renewed, you also need a clear plan for your research. Request the renewal at least one week before your agreement ends, with your Project Manager on CC. See <a href="#requesting-a-renewal" className="underline underline-offset-4 text-foreground hover:text-primary">Requesting a Renewal</a> below.</p>
+            </section>
 
             <div className="flex flex-wrap gap-4">
               <PrimaryButton href="mailto:hr@humanitarians.ai">Email hr@humanitarians.ai</PrimaryButton>
               <SecondaryButton href={BRUTALIST_PLAYLIST}>Watch the Brutalist Tutorials</SecondaryButton>
               <SecondaryButton href="/projects">View Projects</SecondaryButton>
-              <SecondaryButton href="#requesting-renewals">Requesting a Renewal</SecondaryButton>
+              <SecondaryButton href="#requesting-a-renewal">Requesting a Renewal</SecondaryButton>
             </div>
           </div>
 
-          <section id="requesting-renewals" aria-labelledby="renewals-heading" className="scroll-mt-24 p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
-            <h2 id="renewals-heading" className="text-2xl font-bold mb-4">Requesting a Fellowship Renewal</h2>
+          <section id="requesting-renewals" aria-labelledby="requesting-a-renewal" className="scroll-mt-24 p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
+            <h2 id="requesting-a-renewal" className="scroll-mt-24 text-2xl font-bold mb-4">Requesting a Fellowship Renewal</h2>
             <p className="mb-4">
               <strong>Request your renewal at least one week (7 days) before your current agreement ends.</strong> Renewals
               require approval, and agreements are not backdated.
@@ -183,7 +182,7 @@ export default function FellowsPage() {
                 identify any week below 20 hours or with missing records. A monthly average can hide gaps.</li>
               <li><strong className="text-foreground">Videos and Frictional logs:</strong> provide direct links to each
                 required video, the relevant <a href="#frictional-logs" className="underline underline-offset-4 hover:text-primary">dated log entry</a>,
-                and supporting work such as commits, documents, review notes, or demonstrations.</li>
+                and supporting work such as commits or pull requests in your project&apos;s repository, documents, review notes, or demonstrations.</li>
               <li><strong className="text-foreground">Your next steps:</strong> a clear research or project plan with
                 specific deliverables and target dates, plus any unresolved issues.</li>
             </ol>
@@ -224,15 +223,14 @@ export default function FellowsPage() {
                     <td className="p-3">[Date range]</td>
                     <td className="p-3">[Hours worked]</td>
                     <td className="p-3">[STEM/AI video] · [Progress video]</td>
-                    <td className="p-3">[Dated log] · [Commit, document, or artifact]</td>
+                    <td className="p-3">[Dated log] · [Project-repository commit or pull request, document, or artifact]</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <p className="text-muted-foreground mb-4">
               Make evidence one click away. Use descriptive link titles with dates, check viewing permissions, and
-              link to the specific item rather than a repository homepage or folder. During the trial month, include
-              both required videos for each week. A finished video or commit demonstrates an output; pair it with
+              link to the specific item rather than a repository homepage or folder. Include both required videos for every week. A finished video or commit demonstrates an output; pair it with
               dated records of tasks and time worked to document hours. Report gaps honestly.
             </p>
             <p className="text-sm text-muted-foreground">
@@ -412,8 +410,8 @@ export default function FellowsPage() {
               </div>
             </section>
 
-            <section id="frictional-logs" className="scroll-mt-24">
-              <h2 className="text-3xl font-bold mb-6">Frictional Logs</h2>
+            <section aria-labelledby="frictional-logs">
+              <h2 id="frictional-logs" className="scroll-mt-24 text-3xl font-bold mb-6">Frictional Logs</h2>
               <div className="prose prose-lg dark:prose-invert mb-8">
                 <p>
                   Every piece of work carries a <strong>Frictional log</strong> — a short, dated,
@@ -427,11 +425,10 @@ export default function FellowsPage() {
                   >
                     fellows repository
                   </a>{" "}
-                  beside the evidence it describes.
+                  beside the evidence it describes. Think of it as a diary: what you did this week, including the things that didn&apos;t work.
                 </p>
                 <p>
-                  <strong>This is not graded and it is not a performance review.</strong> Nothing about it
-                  affects standing in the program. It exists because a finished artifact no longer shows
+                  <strong>It isn&apos;t graded and it isn&apos;t a performance review, but it is required: a new entry every week.</strong> It exists because a finished artifact no longer shows
                   the learning behind it — a working script, a rendered film, a clean repository can now
                   be produced without the process they used to be evidence of. The log is how the training
                   stays visible: it is documentation of practical learning, kept for the Fellow&apos;s own
@@ -501,7 +498,7 @@ export default function FellowsPage() {
                       One <code className="text-sm">FRICTIONAL.md</code> per work folder —
                       <code className="text-sm">fellows/first-name-last-initial/YYYY-MM-DD-slug/</code>.
                       Each one logs the process behind <em>that</em> piece of work and sits beside the
-                      evidence it describes. Append dated entries as you go; never rewrite an earlier one.
+                      evidence it describes. Append dated entries as you go; never rewrite an earlier one. Each week, add a dated entry to the FRICTIONAL.md in every work folder you worked in that week.
                     </span>
                   </li>
                   <li className="flex gap-3">
@@ -567,8 +564,7 @@ export default function FellowsPage() {
           <div className="p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-background dark:bg-neutral-800">
             <h2 className="text-2xl font-bold mb-4">Our Projects</h2>
             <p className="text-muted-foreground mb-6">
-              Every project Fellows can join, with what each one is working on and whether it is open to new
-              Fellows, is listed on the{" "}
+              Every project Fellows can join is listed on the{" "}
               <Link href="/projects" className="underline underline-offset-4 text-foreground hover:text-primary">
                 Projects page
               </Link>
