@@ -1,5 +1,7 @@
 # Human-approved migration, backfill and rollback plan
 
+> **Step-by-step database runbook:** [MIGRATIONS.md](MIGRATIONS.md) (preflight check, verified backup, apply order, role grants, tested rollback scripts).
+
 Status: code and synthetic tests only. No production migration, import, role grant, notification or deployment has been performed. `TIMESHEETS_ENABLED` defaults closed; the application must not enable it automatically.
 
 ## Before approving rollout

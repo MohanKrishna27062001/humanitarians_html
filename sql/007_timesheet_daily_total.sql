@@ -6,7 +6,19 @@
 -- count: the latest submitted or approved version of each of their other
 -- timesheets. Drafts are still being written and returned versions await
 -- correction, so they do not count.
+-- Run only when sql/checks/timesheets_preflight.sql says '004 applied' and
+-- '007 not applied'. A second run is refused and changes nothing.
 BEGIN;
+SET LOCAL lock_timeout = '5s';
+DO $guard$ BEGIN
+  IF to_regclass('public.timesheet_versions') IS NULL OR to_regclass('public.timesheets') IS NULL THEN
+    RAISE EXCEPTION '007 needs 004 first. Nothing was changed.';
+  END IF;
+  IF to_regprocedure('public.timesheet_check_daily_total()') IS NOT NULL
+     OR EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'timesheet_daily_total' AND NOT tgisinternal) THEN
+    RAISE EXCEPTION '007 is already applied. Nothing was changed. Run sql/checks/timesheets_preflight.sql.';
+  END IF;
+END $guard$;
 CREATE FUNCTION timesheet_check_daily_total() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE owner uuid; over record;
 BEGIN

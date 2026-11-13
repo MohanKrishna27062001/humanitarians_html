@@ -1,5 +1,19 @@
 -- REVIEW REQUIRED: additive schema; never auto-run at startup or deployment.
+-- Run sql/checks/timesheets_preflight.sql first. Run this file only when it says
+-- '004 not applied'. Running it twice is refused by the guard below, and the whole
+-- file is one transaction, so a refusal or any error changes nothing.
 BEGIN;
+SET LOCAL lock_timeout = '5s';
+DO $guard$ BEGIN
+  IF to_regclass('public.fellows') IS NULL OR to_regclass('public.projects') IS NULL
+     OR to_regclass('public.fellow_projects') IS NULL THEN
+    RAISE EXCEPTION '004 needs 001 (fellows, projects, fellow_projects). Nothing was changed.';
+  END IF;
+  IF to_regclass('public.timesheets') IS NOT NULL OR to_regclass('public.timesheet_sessions') IS NOT NULL
+     OR to_regclass('public.timesheet_versions') IS NOT NULL OR to_regprocedure('public.timesheet_command(uuid,uuid,uuid,integer,text,jsonb)') IS NOT NULL THEN
+    RAISE EXCEPTION '004 is already applied (fully or partly). Nothing was changed. Run sql/checks/timesheets_preflight.sql.';
+  END IF;
+END $guard$;
 CREATE TABLE timesheet_sessions (
   token_hash text PRIMARY KEY,
   fellow_id uuid NOT NULL REFERENCES fellows(id),
