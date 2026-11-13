@@ -17,7 +17,7 @@ import * as reset from "../../app/api/admin/fellows/[id]/reset-password/route";
 import * as edit from "../../app/api/admin/fellows/[id]/route";
 import * as create from "../../app/api/admin/fellows/route";
 import * as bulk from "../../app/api/admin/fellows/bulk/route";
-import { listLedger } from "../../lib/ledger";
+import { listLegacyRecords as listLedger } from "../../lib/timesheets/legacy-records";
 import { db, setupSynthetic, actors, cookies, strictCookies } from "./fixture";
 
 before(setupSynthetic);

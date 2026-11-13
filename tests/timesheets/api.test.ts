@@ -205,7 +205,7 @@ test("legacy reads are scoped, write endpoint frozen, regular fellow cannot see 
   assert.equal(body.fellows, undefined);
   assert.equal((await legacy.GET(req("/api/ledger/projects", f))).status, 403);
   assert.equal(
-    (await legacyWrite.PUT(req("/api/ledger/projects/" + p2, outsider))).status,
+    (await legacyWrite.PUT(req("/api/ledger/projects/" + p2, outsider), { params: Promise.resolve({ id: p2 }) })).status,
     410,
   );
 });
@@ -226,7 +226,7 @@ test("legacy archive retains former-member hours and archived projects without a
   assert.equal(projects[0].canEdit, false);
   assert.equal(projects[0].attestation, undefined);
   assert.equal(
-    (await legacyWrite.PUT(req("/api/ledger/projects/" + p2, outsider))).status,
+    (await legacyWrite.PUT(req("/api/ledger/projects/" + p2, outsider), { params: Promise.resolve({ id: p2 }) })).status,
     410,
   );
   assert.equal(

@@ -218,6 +218,27 @@ test('developer without PM assignment can read Ledger but cannot edit or forge s
  assert.deepEqual(await snapshot(),before)
 })
 
+test('Ledger access is unchanged by the timesheet rollout: available while off, developer stays read-only when on',async()=>{
+ const id=randomUUID()
+ await db.query("INSERT INTO fellows(id,name,slug,email,password_hash) VALUES($1::uuid,'Rollout reader',$1::text,$2,$3)",[id,id+'@example.org',passwordHash])
+ await grantRole(id)
+ const cookie='developer_session='+(await issueDeveloperSession(id,passwordHash,query))!
+ const prior=process.env.TIMESHEETS_ENABLED
+ try {
+  delete process.env.TIMESHEETS_ENABLED
+  const off=await ledgerProjects(req('/api/ledger/projects','GET',undefined,{cookie}))
+  assert.equal(off.status,200,'timesheets off must not take the existing Ledger away')
+  process.env.TIMESHEETS_ENABLED='true'
+  const on=await ledgerProjects(req('/api/ledger/projects','GET',undefined,{cookie}))
+  assert.equal(on.status,200,'an approved developer keeps read access after the switch')
+  assert.ok((await on.json()).projects.every((p:any)=>p.canEdit===false))
+  const before=await snapshot()
+  const write=await ledgerWrite(req('/api/ledger/projects/'+project,'PUT',{admin:true,phase:'Done'},{cookie}),params(project))
+  assert.ok([401,403].includes(write.status))
+  assert.deepEqual(await snapshot(),before)
+ } finally { if(prior===undefined) delete process.env.TIMESHEETS_ENABLED; else process.env.TIMESHEETS_ENABLED=prior }
+})
+
 test('preview refuses an inherited database until isolation has been explicitly verified',()=>{
  const prior=process.env.VERCEL_ENV, isolated=process.env.ISOLATED_STAGING_DATABASE
  try {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Legacy from "@/components/timesheets/Legacy";
 export const metadata: Metadata = {
   title: "Legacy manager-reported records",
@@ -7,6 +8,8 @@ export const metadata: Metadata = {
   referrer: "no-referrer",
 };
 export default function Page() {
+  // Before the timesheet rollout the editable Ledger at /ledger is still current.
+  if (process.env.TIMESHEETS_ENABLED !== "true") redirect("/ledger");
   return (
     <section className="max-w-4xl mx-auto p-8 space-y-4">
       <h1 className="text-2xl font-bold">Legacy manager-reported records</h1>
