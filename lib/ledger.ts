@@ -52,8 +52,15 @@ export type LedgerProject = {
   })[];
 };
 
-// admin means an explicit board-view grant, never the shared admin cookie.
-export type Viewer = { fellowId: string | null; name: string; admin: boolean };
+// In the Ledger, admin means an explicit board-view grant, never the shared admin
+// cookie. lib/grants-viewer.ts also sets it for the owner admin on the grants page.
+// readOnly: an approved developer viewing grants (lib/grants-viewer.ts); never set for the Ledger.
+export type Viewer = {
+  readOnly?: boolean;
+  fellowId: string | null;
+  name: string;
+  admin: boolean;
+};
 
 type Row = Record<string, unknown>;
 const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : "");

@@ -1,7 +1,8 @@
 'use client'
 
+import ContentLink from "@/components/ContentLink"
+
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import { Search, X } from 'lucide-react'
 
 export interface LibraryItem { slug: string; title: string; date: string | null; duration: string; playlists: string[]; thumbnail: string }
@@ -58,7 +59,7 @@ export default function LibraryBrowser({ items, playlists }: { items: LibraryIte
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map(v => (
-            <Link key={v.slug} href={`/videos/${v.slug}`} className="group block">
+            <ContentLink block key={v.slug} href={`/videos/${v.slug}`} className="group block">
               <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={v.thumbnail} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
@@ -66,7 +67,7 @@ export default function LibraryBrowser({ items, playlists }: { items: LibraryIte
               </div>
               <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug group-hover:underline">{v.title}</h3>
               {v.date && <p className="mt-1 text-xs text-muted-foreground">{v.date}</p>}
-            </Link>
+            </ContentLink>
           ))}
         </div>
       )}

@@ -6,7 +6,7 @@ import {
 import { legacyIdentityWriteDenied } from "@/lib/timesheets/session";
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { isAdmin } from "@/lib/admin-auth";
+import { dashboardAccess } from "@/lib/dashboard-auth";
 import { hashPassword } from "@/lib/fellow-auth";
 import Papa from "papaparse";
 import crypto from "crypto";
@@ -39,7 +39,7 @@ interface OutputRow {
 export async function POST(req: NextRequest) {
   const frozen = legacyIdentityWriteDenied();
   if (frozen) return frozen;
-  if (!(await isAdmin()))
+  if (!(await dashboardAccess(req, 'identity-admin')))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {

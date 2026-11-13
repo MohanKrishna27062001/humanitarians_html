@@ -1,4 +1,5 @@
 -- REVIEW REQUIRED: additive; never auto-run at startup or deployment. Apply after 004.
+-- (Numbered 007: 006 is sql/006_developer_access.sql.)
 -- One day can hold at most 24 hours across ALL of a fellow's projects.
 -- 004 already enforces 24 hours per day inside one timesheet; this adds the
 -- cross-project check when a version is submitted. Only the fellow's own claims

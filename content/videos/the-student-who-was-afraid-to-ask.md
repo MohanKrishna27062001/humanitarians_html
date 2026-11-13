@@ -3,7 +3,7 @@ title: "The Student Who Was Afraid to Ask"
 seoTitle: "Custom GPT Tutors: How Northeastern Built Ada & Grace"
 description: "Nik Bear Brown shows how custom GPTs like Ada, Nuke, and Grace give students a private way to ask questions they were too embarrassed to ask in class."
 summary: "A professor of engineering walks through custom GPT tutors and AI projects built at Northeastern and Humanitarians AI, including the student who used a chatbot instead of office hours because she was afraid to ask directly."
-keywords: ["custom gpt classroom tutor example", "ada calculus chatbot northeastern", "grace algorithms chatbot coursera", "botspeak ai fluency framework", "medhavi intelligent ai textbook", "custom gpt no funding required", "ai tutor reduces office hours", "humanitarians ai skunk works projects"]
+keywords: ["custom gpt classroom tutor example", "ada calculus chatbot northeastern", "grace algorithms chatbot coursera", "botspeak ai fluency framework", "Medhavy intelligent ai textbook", "custom gpt no funding required", "ai tutor reduces office hours", "humanitarians ai skunk works projects"]
 generated: "article"
 ---
 
@@ -33,7 +33,7 @@ A live demonstration shows this in action: a handwritten calculus problem, photo
 
 The talk shifts to a different kind of project: using language models to draft a full-length book on cancer medicine and nanomedicine, developed with a distinguished professor of physics and nanomedicine at Northeastern for a program that teaches the subject to people worldwide, including in places where access to books and educational materials is limited. The scale of the book is substantial enough that, without AI assistance drafting chapters, the project likely would not have been written at all within a reasonable timeframe, a task that could otherwise take a decade is being completed in a matter of months. A related tool, referred to in the talk as the Popper program, addresses a different problem within the same project: each chapter contains hundreds of factual assertions, and the tool uses language models to search the web and gather evidence supporting or checking those claims automatically.
 
-A companion project called Medhavi turns the resulting book into an adaptive intelligent textbook. Rather than presenting the same content to every reader, Medhavi lets someone log in, identify who they are, a physician versus a high school student, for instance, and then presents the material along a path suited to that reader, rather than forcing everyone through the same linear table of contents.
+A companion project called Medhavy turns the resulting book into an adaptive intelligent textbook. Rather than presenting the same content to every reader, Medhavy lets someone log in, identify who they are, a physician versus a high school student, for instance, and then presents the material along a path suited to that reader, rather than forcing everyone through the same linear table of contents.
 
 ## The larger ecosystem, briefly
 
@@ -46,7 +46,7 @@ Running out of time, the talk closes with a rapid list of other projects underwa
 - Ada, a calculus bot, is deliberately prompted to scaffold answers, explaining what is right and wrong, rather than just returning a correct solution, and to maintain an encouraging tone.
 - A student used Ada specifically because she was afraid to ask her professor questions directly, illustrating a use case beyond convenience: reducing the social cost of asking for help.
 - Language models are being used to draft a full-length book on cancer and nanomedicine, a project that could otherwise take up to a decade to complete.
-- Medhavi presents that book adaptively, tailoring the reading path to whether the reader is a physician, a student, or another kind of learner.
+- Medhavy presents that book adaptively, tailoring the reading path to whether the reader is a physician, a student, or another kind of learner.
 
 ## Who this is for
 

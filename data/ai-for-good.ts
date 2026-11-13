@@ -67,7 +67,7 @@ export const aiForGoodProjects: AiForGoodProject[] = [
     videoId: "29ZfLtleEYo",
     description: "Adaptive AI-powered learning platform with a multi-armed bandit pedagogy engine.",
     links: [
-      { label: "medhavy.com", href: "https://www.medhavy.com/" },
+      { label: "medhavy.com", href: "https://www.medhavy.com" },
       { label: "hub.medhavy.com", href: "https://hub.medhavy.com/" },
       { label: "GitHub", href: "https://github.com/Medhavy" },
       { label: "Substack", href: "https://medhavy.substack.com/" },

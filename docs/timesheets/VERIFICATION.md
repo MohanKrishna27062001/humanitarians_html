@@ -59,4 +59,4 @@ Branch `timesheets/daily-hours-and-summary`, based on `codex/evidence-timesheets
 | `npm run typecheck:timesheets` | PASS | |
 | Browser flow | PASS | The full browser-smoke flow plus a "My hours" box check and a refused 23:00 submission on a second project, run from a local Windows-adapted copy of `browser-smoke.mts` (Windows Chrome path; Tailwind CLI called through Node). The copy and its screenshots are not committed; the committed screenshots are unchanged. |
 
-The cross-project check is a database trigger (`sql/006_timesheet_daily_total.sql`) that runs inside the existing submit transaction and serializes one fellow's submissions with a transaction-scoped advisory lock. Concurrent submissions over separate connections were not tested (same single-engine PGlite limit as above).
+The cross-project check is a database trigger (`sql/007_timesheet_daily_total.sql`) that runs inside the existing submit transaction and serializes one fellow's submissions with a transaction-scoped advisory lock. Concurrent submissions over separate connections were not tested (same single-engine PGlite limit as above).

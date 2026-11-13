@@ -62,7 +62,7 @@ export async function setupSynthetic() {
   await db.exec(await readFile("sql/001_fellows_projects.sql", "utf8"));
   await db.exec(await readFile("sql/003_project_ledger.sql", "utf8"));
   await db.exec(await readFile("sql/004_evidence_timesheets.sql", "utf8"));
-  await db.exec(await readFile("sql/006_timesheet_daily_total.sql", "utf8"));
+  await db.exec(await readFile("sql/007_timesheet_daily_total.sql", "utf8"));
   await db.exec(await readFile("sql/005_standard_profile_links.sql", "utf8"));
   for (const [id, name] of [
     [f, "Fellow"],

@@ -27,7 +27,7 @@ const clients = [
     status: "Current client",
     description:
       "Medhavy turns static textbooks into living, AI-curated courses that run alongside Canvas — combining automation with instructor control. Our fellows support Medhavy's academic work, including helping a university professor bring their course and research materials into this interactive format.",
-    link: "https://www.medhavy.com/",
+    link: "https://www.medhavy.com",
     linkLabel: "Visit Medhavy",
   },
   {

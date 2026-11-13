@@ -24,7 +24,7 @@ let week: string, today: string;
 before(async () => {
   await db.exec(await readFile("sql/001_fellows_projects.sql", "utf8"));
   await db.exec(await readFile("sql/004_evidence_timesheets.sql", "utf8"));
-  await db.exec(await readFile("sql/006_timesheet_daily_total.sql", "utf8"));
+  await db.exec(await readFile("sql/007_timesheet_daily_total.sql", "utf8"));
   const r = await db.query<{ day: string }>(
     "SELECT to_char((now() AT TIME ZONE 'UTC')::date,'YYYY-MM-DD') AS day",
   );
@@ -457,7 +457,7 @@ test("duplicate weekly timesheets and future or non-Monday weeks rejected", asyn
   );
 });
 
-// sql/006: one day holds at most 24 hours across all of a fellow's projects.
+// sql/007: one day holds at most 24 hours across all of a fellow's projects.
 async function sheetWith(project: string, minutes: number) {
   const s = await command(ids.fellow, null, "create", { project_id: project, week }),
     e = entry({ minutes });

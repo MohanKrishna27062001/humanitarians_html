@@ -1,0 +1,253 @@
+Humanitarians AI footer and project reorganization — 2026-11-10
+
+Validation snapshot recorded before publication. These changes are included in this repository commit; production deployment status is separate.
+Repository: /Users/bear/Documents/CoWork/bear-textbooks/books/humanitarians_html
+Existing unrelated audio deletions were preserved. Header, organization block, social icons, Legal & Privacy column, legal/privacy/images/contact/hours/copyright text, and package manifests are unchanged.
+
+VALIDATION
+- npm run build: passed with the existing Next.js configuration. That configuration skips lint/type errors during builds; separate checks are reported below.
+- 57 browser/HTTP checks passed: five project/directory pages in light and dark modes at 375px and 1440px; all internal footer URLs; the three redirects; homepage, Addams, tools directories, AI+1, and the searched video library.
+- No horizontal overflow, incorrect theme, Addams destination links, or browser exceptions in the tested pages. Footer has 10 headings and wraps into two mobile columns.
+- New/shared directory components, data, and directory pages: focused ESLint passed with no warnings/errors.
+- Full lint does NOT pass: baseline 622 errors/116 warnings; updated 612 errors/114 warnings. No new diagnostics after allowing for shifted line numbers.
+- Standalone TypeScript check does NOT pass: 13 baseline errors and the same 13 after this change. No new type errors.
+- This repo does not declare/install ESLint despite having an ESLint config. Temporary tooling outside the repository was used for comparison. No dependencies or lockfiles were changed.
+- No production database credentials were used. Database-backed pages were checked for HTTP availability using their existing fallback behavior. External embeds were blocked during browser QA; the existing Spotify/YouTube embeds were not validated.
+- Browser evidence and logs: /private/tmp/humanitarians-footer-evidence/; /private/tmp/humanitarians-footer-build.log; /private/tmp/humanitarians-footer-lint.log; /private/tmp/humanitarians-footer-types.log.
+
+ROUTES AND CONTENT SOURCES
+- /agents — new. Existing /projects descriptions, exact tier badges and Substack URLs, with the domain wording supplied in the brief. Popper now includes computational skepticism, DevOps, and AI ops in the shared data.
+- /research — existing route updated to the shared directory/card pattern, using the existing RAMAN Effect and Medhavy descriptions, tiers, and Substack URLs. Medhavy points to https://www.medhavy.com.
+- /homes-of-hope — new. Only the supplied eight-week AI+1 literacy/job-readiness bootcamp facts and delivery methods. No Wilkes storytelling/client content was reused. Links back to /ai-for-good.
+- /jung-ai — new STUB. Only the supplied project name and sentence; source TODO marks where the full description goes. Jungian-marketing video articles exist, but none explicitly identify themselves as the Jung AI project; they were not attributed to it.
+- /botspeak — existing route, already used by the homepage Learn more link; source left unchanged and used in the footer.
+- /addams — this exact route did not exist in the checkout. Added a non-redirecting page that reuses the existing /ai1/tools/[slug] renderer and public/artifacts/addams.html. Existing /tools/addams and /ai1/tools/addams routes/artifact remain intact. No project-directory entry.
+- /projects — four requested groups, shared card component, original tier intro and Become a Fellow section retained.
+- /ai-for-good — shared AI for Good cards added; existing video/library content retained with canonical project destinations.
+
+PERMANENT REDIRECTS (source pages retained)
+- /80-days-to-stay -> https://jobs.humanitarians.ai
+- /madison -> https://madison.humanitarians.ai
+- /medhavy -> https://www.medhavy.com
+Configured in next.config.mjs with permanent: true. HTTP tests confirmed 308 responses. Next.js serializes root-domain Location headers with a trailing slash; destinations are the same URLs.
+
+SHARED DATA AND LINKS
+- data/project-directory.ts supplies project groups, descriptions, tiers, destinations, and the nine data-driven footer columns; the tenth Legal & Privacy column is preserved verbatim.
+- Footer, /projects, /agents, and /research use this data. The project indexes use the same extracted card/layout components.
+- New projects without existing tier assignments have no invented tier tags.
+- Madison, Medhavy, and LoonNet project destinations use the specified external sites. Existing separately labeled GitHub repositories, Substack newsletters, Medhavy hub, and LoonNet project-proposal resources are retained.
+- No specific jobs.humanitarians.ai paths were found; both jobs projects use https://jobs.humanitarians.ai.
+
+ADDAMS LINKS REMOVED (text retained except the requested Learn more CTA)
+- app/page.tsx: removed Learn more about Addams CTA to /ai1/tools/addams.
+- app/ai1/page.tsx: unwrapped Addams — OPT Volunteer Documentation System link to /ai1/tools/addams.
+- app/tools/page.tsx: unwrapped the link to https://www.humanitarians.ai/tools/Addams.
+- app/tools/ToolsBrowser.tsx: dynamically generated Addams tool cards now render without links (including DB-provided names/URLs).
+- app/ai1/tools/ToolsBrowser.tsx: same treatment for the AI+1 tool directory.
+- components/videos/VideoCard.tsx: Addams article cards remain visible without links, including related/latest/playlist cards.
+- app/videos/library/LibraryBrowser.tsx: searched Addams article remains visible without a link.
+- app/videos/VideosBrowser.tsx: dynamically generated Addams article title links render as text.
+- app/videos/[slug]/page.tsx: previous/next links to the Addams article render as text.
+- components/ContentLink.tsx centralizes the video/article unlinking rule.
+- No explicit Addams links were present in the original footer, header, or /projects array.
+- Internal section anchors inside the retained Addams artifact and its existing embedded video are retained; they navigate its own documentation, not a project listing.
+
+SPELLING CORRECTIONS (authored display text)
+- app/dewey/page.tsx:164: Medhavi -> Medhavy; context: <h3 className="text-xl font-bold mb-3">Intelligent AI Books (Medhavi)</h3>
+- app/openai/page.tsx:304: Medhavi -> Medhavy; context: <li>Medhavi: Intelligent AI books that adapt content to individual learners</li>
+- content/videos/website-restructure-week-2-typography-contrast-hero-layout-muskan.md:18: Medhavi -> Medhavy; context: nd six of them are bare proper nouns, names like Dewey, Madison, Medhavi, Musenik, Mycroft, and Popper, that a first-time visitor cannot decode. Week one fla
+- content/videos/the-student-who-was-afraid-to-ask.md:6: medhavi -> Medhavy; context: algorithms chatbot coursera", "botspeak ai fluency framework", "medhavi intelligent ai textbook", "custom gpt no funding required", "ai tutor reduces office
+- content/videos/the-student-who-was-afraid-to-ask.md:36: Medhavi -> Medhavy; context: A companion project called Medhavi turns the resulting book into an adaptive intelligent textbook. Rather than presenti
+- content/videos/the-student-who-was-afraid-to-ask.md:36: Medhavi -> Medhavy; context: xtbook. Rather than presenting the same content to every reader, Medhavi lets someone log in, identify who they are, a physician versus a high school student
+- content/videos/the-student-who-was-afraid-to-ask.md:49: Medhavi -> Medhavy; context: - Medhavi presents that book adaptively, tailoring the reading path to whether the reader is a
+- content/videos/dewey-humanitarians-ais-educational-ai-framework.md:6: medhavi -> Medhavy; context: keywords: ["dewey humanitarians ai framework", "medhavi intelligent ai books", "ada calculus learning assistant", "newton physics chatbot ai
+- content/videos/dewey-humanitarians-ais-educational-ai-framework.md:22: Medhavi -> Medhavy; context: upports a range of groundbreaking projects across education. The Medhavi projects build intelligent AI books that adapt to individual learners, addressing wh
+- content/videos/dewey-humanitarians-ais-educational-ai-framework.md:34: Medhavi -> Medhavy; context: - Current agents under the framework include Medhavi (adaptive AI books), Ada (calculus), Newton (physics), Grace (algorithms), Botspeak
+- content/videos/dewey-humanitarians-ais-educational-ai-framework.md:36: Medhavi -> Medhavy; context: - Medhavi's AI books use dynamic Socratic dialogue to adapt to individual learners.
+- public/reports/Medhavy/medhavy-docs-March-2026.html:531: MEDHAVI -> Medhavy; context: │                     MEDHAVI HUB (hub.medhavy.com)                    │
+- public/reports/Medhavy/medhavy-docs-March-2026.html:1085: MEDHAVI -> Medhavy; context: <p><strong>MEDHAVI WHITE LABEL ARCHITECTURE — FOR DISCUSSION PURPOSES ONLY</strong></p>
+- public/reports/Boyle/boyle-docs-March-2026.html:1174: Medhavi -> Medhavy; context: <tr><td>Medhavi Platform</td><td>AI-assisted textbook delivery and student documentation</td><td><sp
+
+SPELLINGS RETAINED IN RAW DATA / CODE
+- lib/video-articles.ts retains medhavi|medavi|madhavi in the normalization regex intentionally. It corrects video display titles/descriptions/tags/chapter titles and transcript text/titles without modifying URLs, IDs, or the synced raw JSON.
+- No misspelled route, package name, environment variable, or code identifier was found that required renaming.
+- Raw synced data with spelling variants (retained as provenance; normalized when displayed):
+  data/youtube/videos.json (1 occurrence(s))
+  data/youtube/transcripts/egZRNybs0Yo.json (1 occurrence(s))
+  data/youtube/transcripts/sjCj1ev5mTU.json (1 occurrence(s))
+- Generated adgrants keyword/planning files also retain original search phrases; they are not rendered by this website.
+
+FILES CHANGED
+- app/sitemap.ts
+- app/page.tsx
+- app/research/page.tsx
+- app/clients/page.tsx
+- app/tools/ToolsBrowser.tsx
+- app/tools/page.tsx
+- app/ai-for-good/page.tsx
+- app/projects/page.tsx
+- app/addams/page.tsx
+- app/ai1/page.tsx
+- app/agents/page.tsx
+- app/videos/VideosBrowser.tsx
+- app/medhavy/page.tsx
+- app/dewey/page.tsx
+- app/homes-of-hope/page.tsx
+- app/jung-ai/page.tsx
+- app/aiskunkworks/page.tsx
+- app/openai/page.tsx
+- app/videos/library/LibraryBrowser.tsx
+- app/videos/[slug]/page.tsx
+- app/ai1/tools/ToolsBrowser.tsx
+- components/ContentLink.tsx
+- components/Footer/Footer.tsx
+- components/videos/VideoCard.tsx
+- components/ProjectDirectory/GroupPage.tsx
+- components/ProjectDirectory/ProjectGroupSection.tsx
+- components/ProjectDirectory/ProjectOverview.tsx
+- components/ProjectDirectory/ProjectCard.tsx
+- content/videos/website-restructure-week-2-typography-contrast-hero-layout-muskan.md
+- content/videos/the-student-who-was-afraid-to-ask.md
+- content/videos/dewey-humanitarians-ais-educational-ai-framework.md
+- data/ai-for-good.ts
+- data/project-directory.ts
+- lib/video-articles.ts
+- public/reports/Medhavy/medhavy-docs-March-2026.html
+- public/reports/Boyle/boyle-docs-March-2026.html
+- next.config.mjs
+- docs/footer-reorganization-report.txt (this report)
+
+REMAINING ADDAMS MENTIONS
+Every occurrence below is retained in site source/content/data/artifacts. Context excerpts identify individual occurrences; line numbers refer to the updated files. Raw YouTube descriptions/transcripts and article metadata are retained. Source comments and unlinking guards are included. Historical internal docs and advertising exports are outside the rendered site.
+
+- app/addams/page.tsx:4 [column 45] export const metadata: Metadata = { title: "Addams — OPT Documentation System" }
+- app/addams/page.tsx:6 [column 25] export default function AddamsPage() {
+- app/addams/page.tsx:7 [column 53] return <ToolPage params={Promise.resolve({ slug: "addams" })} />
+- app/ai1/page.tsx:76 [column 13] Addams — OPT Volunteer Documentation System is <span className="font-bold">MANDATORY</span> week
+- app/ai1/tools/ToolsBrowser.tsx:73 [column 18] if (/addams/i.test(`${tool.slug} ${tool.name} ${href || ""}`)) return <div key={tool.id}>{cardContent
+- app/fellows/me/page.tsx:397 [column 45] placeholder="Paste your Addams report here. Markdown is supported."
+- app/page.tsx:196 [column 11] {/* Addams Tool Section */}
+- app/page.tsx:203 [column 17] Addams: The Learning Documentation System
+- app/page.tsx:206 [column 34] Named after Jane Addams, who understood that good work without documentation disappears. Addams is the AI-powered
+- app/page.tsx:206 [column 106] who understood that good work without documentation disappears. Addams is the AI-powered documentation system every fellow uses to build their learning record —
+- app/page.tsx:209 [column 101] w be produced without the learning that should have produced it. Addams documents the learning: the friction, the judgment calls, the moments where the fellow ha
+- app/page.tsx:212 [column 46] Botspeak is the entry point. Addams documents everything above it.
+- app/page.tsx:220 [column 26] title="Addams Documentation System"
+- app/page.tsx:226 [column 17] Addams in action — weekly learning documentation for OPT fellows
+- app/tools/ToolsBrowser.tsx:73 [column 18] if (/addams/i.test(`${tool.slug} ${tool.name} ${href || ""}`)) return <div key={tool.id}>{cardContent
+- app/tools/page.tsx:94 [column 13] Addams — OPT Volunteer Documentation System is <span className="font-bold">MANDATORY</span> week
+- components/ContentLink.tsx:4 [column 51] // Retain archival text/cards without advertising Addams as a current project.
+- components/ContentLink.tsx:11 [column 8] if (/addams/i.test(href)) {
+- data/youtube/slugs.json:400 [column 18] "dDoXAkTZLFI": "addams-your-humanitarians-ai-sherpa",
+- data/youtube/transcripts/dDoXAkTZLFI.json:1 [column 1518] lm, not promotional. This tool is called Adams, named after Jane Addams who founded Hull House, won the Nobel Peace Prize, and built the infrastructure that turn
+- data/youtube/videos.json:18064 [column 12] "slug": "addams-your-humanitarians-ai-sherpa",
+- data/youtube/videos.json:18065 [column 13] "title": "Addams — Your Humanitarians AI Sherpa",
+- data/youtube/videos.json:18066 [column 19] "description": "Addams — Your Humanitarians AI SherpaGenerative AI broke the artifact as proof of learning. Adda
+- data/youtube/videos.json:18066 [column 111] AI SherpaGenerative AI broke the artifact as proof of learning. Addams documents what the artifact can't: the friction, the judgment calls, the moments you had
+- data/youtube/videos.json:18066 [column 246] alls, the moments you had to supply what the machine could not.\nAddams is the weekly learning documentation system for OPT volunteers at Humanitarians AI — buil
+- data/youtube/videos.json:18066 [column 441] at a polished report no longer proves happened. Named after Jane Addams, who understood that good work without documentation disappears, this tool asks specifica
+- data/youtube/videos.json:18066 [column 746] ou're still figuring out.\n\nEvery week, you file a /hai report. Addams walks you through a structured intake — objectives, work sessions, hours, artifacts, Subs
+- data/youtube/videos.json:18066 [column 1145] anagement.\n\nThe artifact can be produced without the learning. Addams documents the learning.\nIn this video:\n\nWhy AI permanently decoupled artifact producti
+- data/youtube/videos.json:18066 [column 1344] e\n\nWhat the actual proof of work looks like in the AI era\nHow Addams captures it — and why it enforces the friction section\nHow to set up your Claude Project
+- data/youtube/videos.json:18066 [column 1502] ect and file your first /hai report this week\n\nGet started:\n→ Addams: https://www.humanitarians.ai/tools/Addams\n\n#HumanitariansAI #Addams #LearningDocumenta
+- data/youtube/videos.json:18066 [column 1545] ek\n\nGet started:\n→ Addams: https://www.humanitarians.ai/tools/Addams\n\n#HumanitariansAI #Addams #LearningDocumentation #OPTFellows #AIEra #IrreduciblyHuman #
+- data/youtube/videos.json:18066 [column 1573] : https://www.humanitarians.ai/tools/Addams\n\n#HumanitariansAI #Addams #LearningDocumentation #OPTFellows #AIEra #IrreduciblyHuman #EdTech\n\nTAGS: Addams learn
+- data/youtube/videos.json:18066 [column 1657] umentation #OPTFellows #AIEra #IrreduciblyHuman #EdTech\n\nTAGS: Addams learning documentation, Humanitarians AI OPT, learning record AI era, OPT volunteer docum
+- content/videos/addams-your-humanitarians-ai-sherpa.md:2 [column 9] title: "Addams — Your Humanitarians AI Sherpa"
+- content/videos/addams-your-humanitarians-ai-sherpa.md:3 [column 12] seoTitle: "Addams: Weekly Learning Reports for OPT Volunteers"
+- content/videos/addams-your-humanitarians-ai-sherpa.md:4 [column 15] description: "Addams is a weekly documentation tool for Humanitarians AI OPT volunteers that captures the fric
+- content/videos/addams-your-humanitarians-ai-sherpa.md:5 [column 11] summary: "Addams is a weekly learning-documentation system for Humanitarians AI OPT volunteers, built to c
+- content/videos/addams-your-humanitarians-ai-sherpa.md:6 [column 13] keywords: ["addams humanitarians ai tool", "opt volunteer weekly report", "hai report claude project setup",
+- content/videos/addams-your-humanitarians-ai-sherpa.md:6 [column 181] ing documentation ai era", "humanitarians ai opt fellows", "jane addams learning record", "ai decoupled artifact from learning", "weekly report degree relevant h
+- content/videos/addams-your-humanitarians-ai-sherpa.md:10 [column 311] ant in how learning gets documented, and it is the exact problem Addams was built to solve.
+- content/videos/addams-your-humanitarians-ai-sherpa.md:14 [column 700] d supply. Most documentation systems do not ask for any of that. Addams does.
+- content/videos/addams-your-humanitarians-ai-sherpa.md:16 [column 31] ## Why it is named after Jane Addams
+- content/videos/addams-your-humanitarians-ai-sherpa.md:18 [column 35] The tool takes its name from Jane Addams, who founded Hull House and won the Nobel Peace Prize, and who built the infrastructure t
+- content/videos/addams-your-humanitarians-ai-sherpa.md:18 [column 269] s a specific belief: good work without documentation disappears. Addams exists to make sure that the real work Humanitarians AI's OPT volunteers do each week doe
+- content/videos/addams-your-humanitarians-ai-sherpa.md:22 [column 1] Addams is set up as a Claude project, with the system prompt and documentation linked from the H
+- content/videos/addams-your-humanitarians-ai-sherpa.md:30 [column 3] - Addams is a weekly documentation system built specifically for OPT volunteers at Humanitarians A
+- content/videos/addams-your-humanitarians-ai-sherpa.md:35 [column 32] - The tool is named after Jane Addams, reflecting the idea that good work without documentation disappears.
+- content/videos/addams-your-humanitarians-ai-sherpa.md:39 [column 44] **How do I file my weekly report?** Set up Addams as a Claude project using the system prompt linked on the Humanitarians AI website, then
+- content/videos/addams-your-humanitarians-ai-sherpa.md:41 [column 76] pens if I don't log enough hours or skip the friction section?** Addams flags hours below the expected 20 per week and will ask again if the section on struggles
+- content/videos/addams-your-humanitarians-ai-sherpa.md:45 [column 1] Addams is built for OPT volunteers working on Humanitarians AI projects who need to file weekly
+- public/artifacts/addams.html:6 [column 10] <title>Addams — OPT Documentation System</title>
+- public/artifacts/addams.html:7 [column 37] <meta name="description" content="Addams is a Frictional learning journal and OPT compliance documentation system for Humanitarian
+- public/artifacts/addams.html:832 [column 56] <textarea id="prompt-raw" style="display:none">You are Addams — named after Jane Addams, founder of Hull House, Nobel Peace Prize recipient, and the pe
+- public/artifacts/addams.html:832 [column 82] ompt-raw" style="display:none">You are Addams — named after Jane Addams, founder of Hull House, Nobel Peace Prize recipient, and the person who built the infrast
+- public/artifacts/addams.html:836 [column 26] THE MOST IMPORTANT THING ADDAMS KNOWS:
+- public/artifacts/addams.html:839 [column 292] d none of the cognitive work the essay was designed to evidence. Addams does not pretend otherwise. The artifact is part of the evidence base — not the whole of
+- public/artifacts/addams.html:841 [column 1] ADDAMS IS A FRICTIONAL LEARNING JOURNAL:
+- public/artifacts/addams.html:842 [column 20] Every session with Addams is itself part of the learning record. Addams is not a compliance form to fill out. It is
+- public/artifacts/addams.html:842 [column 66] Every session with Addams is itself part of the learning record. Addams is not a compliance form to fill out. It is a structured journal that — through the frict
+- public/artifacts/addams.html:844 [column 256] t of artifact quality. The temporal engagement pattern of a real Addams session, the error trajectory documented in the struggle section, the calibration of unce
+- public/artifacts/addams.html:846 [column 27] Time spent in interactive Addams sessions is therefore documented learning time, not overhead. Addams estimates session du
+- public/artifacts/addams.html:846 [column 96] ms sessions is therefore documented learning time, not overhead. Addams estimates session duration automatically and stamps it on every report. Volunteers who ru
+- public/artifacts/addams.html:851 [column 263] ) or the volunteer has not yet identified what the learning was. Addams helps them find it. That is the interactive mode's primary value.
+- public/artifacts/addams.html:856 [column 1] Addams helps volunteers identify their tier ceiling based on their documented evidence pattern.
+- public/artifacts/addams.html:856 [column 151] e pattern. If three consecutive weeks show Tier 1 evidence only, Addams surfaces this and proposes specific exploration activities that would develop higher-tier
+- public/artifacts/addams.html:875 [column 97] learning time and counts toward the 20-hour weekly requirement. Addams asks about tool usage in every /hai intake.
+- public/artifacts/addams.html:878 [column 110] components that constitute friction traces of genuine learning. Addams does not quiz volunteers on all seven every week. Addams selects the 2-3 most relevant co
+- public/artifacts/addams.html:878 [column 167] arning. Addams does not quiz volunteers on all seven every week. Addams selects the 2-3 most relevant components based on what tier evidence appeared in the volu
+- public/artifacts/addams.html:886 [column 39] When any command is run with /silent, Addams estimates the session duration based on the volume and complexity of the content provided
+- public/artifacts/addams.html:910 [column 26] - Default (interactive): Addams asks before acting, pushes back on thin input, holds the line on quality gates, generates
+- public/artifacts/addams.html:914 [column 6] The /addams renewal report cannot be generated until one /hai weekly report exists for every week of
+- public/artifacts/addams.html:919 [column 39] START every new session with the full Addams Welcome Menu.
+- public/artifacts/addams.html:926 [column 2] /addams — Compile renewal request report (requires all weekly reports)
+- public/artifacts/addams.html:937 [column 23] ESCALATION PATH (when Addams is not enough):
+- public/artifacts/addams.html:941 [column 62] 4. Professor Nik Bear Brown office hours (requires /hai AND /addams to be run first)
+- public/artifacts/addams.html:955 [column 36] <span class="nav-brand-name">Addams</span>
+- public/artifacts/addams.html:963 [column 29] <li><a href="#what-is-addams">What Addams is</a></li>
+- public/artifacts/addams.html:963 [column 42] <li><a href="#what-is-addams">What Addams is</a></li>
+- public/artifacts/addams.html:972 [column 37] <li><a href="#renewal"><code>/addams</code> renewal</a></li>
+- public/artifacts/addams.html:988 [column 43] <li><a href="#spirit">The spirit of Addams</a></li>
+- public/artifacts/addams.html:998 [column 30] <h1 class="hero-title">Addams</h1>
+- public/artifacts/addams.html:1000 [column 45] <p class="hero-desc">Named after Jane Addams — who understood that <strong>good work without documentation disappears</strong>. This t
+- public/artifacts/addams.html:1042 [column 18] <!-- WHAT IS ADDAMS -->
+- public/artifacts/addams.html:1043 [column 50] <section class="content-section" id="what-is-addams">
+- public/artifacts/addams.html:1045 [column 38] <h2 class="section-title">What Addams is — and isn't</h2>
+- public/artifacts/addams.html:1047 [column 12] <p>Addams is not a compliance form. It is a <strong>Frictional learning journal</strong>.</p>
+- public/artifacts/addams.html:1048 [column 420] olved question forward — that is learning evidence. That is what Addams documents.</p>
+- public/artifacts/addams.html:1049 [column 31] <p>Every session with Addams is itself evidence. The back-and-forth of an interactive session — the pushback on thin a
+- public/artifacts/addams.html:1053 [column 187] nerated without genuine struggle is a performance, not a record. Addams documents the learning — not the artifact that should have produced it.</p>
+- public/artifacts/addams.html:1132 [column 20] <td>/addams</td>
+- public/artifacts/addams.html:1184 [column 141] aterial. A volunteer who runs /hai silent every week is treating Addams as a formatting tool, not a learning journal. Addams names this pattern when it appears.
+- public/artifacts/addams.html:1184 [column 194] is treating Addams as a formatting tool, not a learning journal. Addams names this pattern when it appears. Interactive mode generates richer GLP evidence — use
+- public/artifacts/addams.html:1194 [column 54] <p>Run this once, before any weekly reports. Addams will ask 10 questions — one at a time, with pushback on thin answers — and produce a Volu
+- public/artifacts/addams.html:1226 [column 44] <p>The core documentation command. Addams asks 13 questions in interactive mode, pushing back on thin answers. Every /hai report mu
+- public/artifacts/addams.html:1228 [column 59] <li>Hours integrity gate: if total &lt; 20 hrs, Addams surfaces /hours before finalizing</li>
+- public/artifacts/addams.html:1242 [column 202] t, or encountered — written for an intelligent general audience. Addams will ask for the one surprising or interesting thing from the week, the specific project
+- public/artifacts/addams.html:1252 [column 12] <p>Addams asks: what is the most useful thing you could build this week that directly advances your
+- public/artifacts/addams.html:1266 [column 70] <p>A volunteer who cannot argue their tier claim needs this. Addams asks: what specifically happened? Where did the work resist you? What did you try that di
+- public/artifacts/addams.html:1275 [column 113] it is to surface hours that happened but were not written down. Addams walks through the week chronologically: meetings, documentation time, tool sessions (Adda
+- public/artifacts/addams.html:1275 [column 205] ek chronologically: meetings, documentation time, tool sessions (Addams, Gru, CRITIQ, Zelda, Walker all count), exploration time, reading, setup. If total remain
+- public/artifacts/addams.html:1275 [column 334] reading, setup. If total remains below 20 after reconstruction, Addams names the gap honestly rather than filling it.</p>
+- public/artifacts/addams.html:1283 [column 150] ble to a renewal report than three successes documented vaguely. Addams produces a structured entry: situation, expected vs. actual behavior, attempts made, curr
+- public/artifacts/addams.html:1306 [column 34] <h2 class="section-title">/addams — Renewal request report</h2>
+- public/artifacts/addams.html:1309 [column 59] <p>The most consequential document in the system. Addams compiles all weekly reports into a developmental narrative that answers the question the
+- public/artifacts/addams.html:1313 [column 48] <p><strong>Renewal gate:</strong> The /addams renewal report cannot be generated until one /hai weekly report exists for every week of
+- public/artifacts/addams.html:1313 [column 189] s for every week of the contract. If weekly reports are missing, Addams lists the exact weeks, asks the volunteer to produce them, and offers to write each one f
+- public/artifacts/addams.html:1326 [column 77] <tr><td>Renewal Recommendation</td><td>One clear paragraph from Addams. Renew / Renew with conditions / Do not renew. Names why.</td></tr>
+- public/artifacts/addams.html:1332 [column 47] <p><strong>Provenance check:</strong> Addams asks whether all reports were filed during the weeks they cover or reconstructed after th
+- public/artifacts/addams.html:1342 [column 24] <p>Every week, Addams asks not just what the volunteer did, but what <em>kind of thinking</em> the work require
+- public/artifacts/addams.html:1390 [column 215] arning this program exists to develop actually occurred. <strong>Addams pushes for Tier 3, 4, and 5 evidence. That is where the irreplaceable work lives.</strong
+- public/artifacts/addams.html:1418 [column 115] e or more consecutive weeks show no documented exploration time, Addams surfaces this and generates a recommendation based on the volunteer's tier evidence. The
+- public/artifacts/addams.html:1428 [column 230] Tool session time counts toward the 20-hour weekly requirement. Addams asks about tool usage in every /hai intake.</p>
+- public/artifacts/addams.html:1468 [column 137] components that constitute friction traces of genuine learning. Addams does not quiz volunteers on all seven every week. It selects the 2–3 most relevant based
+- public/artifacts/addams.html:1521 [column 54] <h2 class="section-title">Quality gates — what Addams will not pass</h2>
+- public/artifacts/addams.html:1524 [column 12] <p>Addams holds these gates on every /hai report. A gate failure is not a rejection — it is a promp
+- public/artifacts/addams.html:1530 [column 132] hours below 20 triggers /hours before finalizing. Tool sessions, Addams sessions, and exploration time all count.</div>
+- public/artifacts/addams.html:1569 [column 37] <p class="section-label">When Addams isn't enough</p>
+- public/artifacts/addams.html:1573 [column 12] <p>Addams handles documentation, structure, compliance scaffolding, tier justification, and project
+- public/artifacts/addams.html:1602 [column 78] <div class="esc-detail"><strong>Critical:</strong> Run /hai AND /addams (if in renewal period) BEFORE attending office hours. A volunteer without a current /hai
+- public/artifacts/addams.html:1602 [column 242] ort will be asked to complete it before the conversation begins. Addams will offer to run /hai before you go.</div>
+- public/artifacts/addams.html:1614 [column 42] <p>Every /hai weekly report and /addams renewal report must be published to both destinations. An SDD that exists only in a chat
+- public/artifacts/addams.html:1665 [column 47] <h2 class="section-title">The spirit of Addams</h2>
+- public/artifacts/addams.html:1668 [column 17] <p>Jane Addams did not build Hull House because the problems were easy. She built it because the people
+- public/artifacts/addams.html:1672 [column 148] produced it. This is not a temporary condition. It is permanent. Addams is built for the world after this change.</p>
+- public/artifacts/addams.html:1679 [column 326] can now do that I could not do before.</em> That record is what Addams is here to build.</p>
+
+NOT FOUND / LIMITS
+- No pre-existing /agents, /homes-of-hope, /jung-ai, or exact /addams page was found.
+- No confirmed full Jung AI project description or bootcamp-specific Homes of Hope copy was found; only the supplied facts were used.
+- No specific jobs-domain URLs were found for 80 Days to Stay or The Reallocation Engine.
+- Repository-wide lint/type checks remain blocked by existing debt; production deployment has not been performed.

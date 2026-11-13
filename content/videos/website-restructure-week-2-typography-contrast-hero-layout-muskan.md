@@ -15,7 +15,7 @@ Week one ended with a decision to fix the structural problems first and reassess
 
 ## The footer link audit
 
-The footer was audited at the link level: six columns, thirty-three links inside them, thirty-nine anchors in total, a reasonable place for depth but a poor place to be carrying basic site orientation. The projects column is the largest at eleven links, and six of them are bare proper nouns, names like Dewey, Madison, Medhavi, Musenik, Mycroft, and Popper, that a first-time visitor cannot decode. Week one flagged this same problem, and remeasuring in week two shows it hasn't changed. The audit also turned up duplication: "All Projects" and "Musenik" both appear in two different footer columns, small issues individually that together signal a structure that grew rather than one that was designed.
+The footer was audited at the link level: six columns, thirty-three links inside them, thirty-nine anchors in total, a reasonable place for depth but a poor place to be carrying basic site orientation. The projects column is the largest at eleven links, and six of them are bare proper nouns, names like Dewey, Madison, Medhavy, Musenik, Mycroft, and Popper, that a first-time visitor cannot decode. Week one flagged this same problem, and remeasuring in week two shows it hasn't changed. The audit also turned up duplication: "All Projects" and "Musenik" both appear in two different footer columns, small issues individually that together signal a structure that grew rather than one that was designed.
 
 ## Fixing the type scale
 

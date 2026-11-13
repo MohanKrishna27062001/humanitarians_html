@@ -3,6 +3,8 @@ import Link from "next/link"
 import { join } from "path"
 import PrimaryButton from "@/components/ui/primary-button"
 import SecondaryButton from "@/components/ui/secondary-button"
+import { getProjectGroup, getDirectoryProject } from "@/data/project-directory"
+import ProjectGroupSection from "@/components/ProjectDirectory/ProjectGroupSection"
 import { aiForGoodProjects } from "@/data/ai-for-good"
 import { scanFlatCategory } from "@/lib/ai1"
 import { scanHtmlDir } from "@/lib/html-meta"
@@ -46,6 +48,8 @@ export default function AIForGoodPage() {
         </div>
       </section>
 
+      <ProjectGroupSection group={getProjectGroup("ai-for-good")} />
+
       {/* Projects */}
       <section className="w-full py-12 md:py-16 bg-muted dark:bg-neutral-900">
         <div className="container px-4 md:px-6 mx-auto">
@@ -66,11 +70,11 @@ export default function AIForGoodPage() {
                 </div>
                 <div className="flex flex-1 flex-col p-6">
                   <h3 className="text-2xl font-bold tracking-tight mb-2">
-                    <Link href={`/${p.slug}`} className="hover:underline">{p.name}</Link>
+                    <Link href={getDirectoryProject(p.slug).href} className="hover:underline">{p.name}</Link>
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-5">{p.description}</p>
                   <div className="mt-auto flex flex-wrap gap-2">
-                    <Link href={`/${p.slug}`} className={chip}>Project page</Link>
+                    <Link href={getDirectoryProject(p.slug).href} className={chip}>Project page</Link>
                     {p.links.map((l) => (
                       <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className={chip}>{l.label} ↗</a>
                     ))}

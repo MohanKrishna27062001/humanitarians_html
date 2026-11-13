@@ -1,3 +1,4 @@
+import ContentLink from "@/components/ContentLink"
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -205,8 +206,8 @@ export default async function VideoArticlePage({ params }: { params: Promise<{ s
 
         {(prev || next) && (
           <nav className="mt-12 grid grid-cols-1 gap-4 border-t pt-8 sm:grid-cols-2">
-            {prev ? <Link href={`/videos/${prev.slug}`} className="text-sm hover:underline">← {prev.title}</Link> : <span />}
-            {next ? <Link href={`/videos/${next.slug}`} className="text-sm hover:underline sm:text-right">{next.title} →</Link> : <span />}
+            {prev ? <ContentLink href={`/videos/${prev.slug}`} className="text-sm hover:underline">← {prev.title}</ContentLink> : <span />}
+            {next ? <ContentLink href={`/videos/${next.slug}`} className="text-sm hover:underline sm:text-right">{next.title} →</ContentLink> : <span />}
           </nav>
         )}
       </div>

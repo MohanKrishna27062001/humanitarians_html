@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { footerSections } from "@/data/project-directory"
 import ThemeToggle from "@/components/ThemeToggle"
 
 export default function Footer() {
@@ -63,79 +64,17 @@ export default function Footer() {
          </div>
 
          {/* Links Sections */}
-         <div className="md:col-span-9 grid grid-cols-1 md:grid-cols-6 gap-8">
-           {/* Company */}
-           <div className="space-y-4">
-             <h3 className="text-lg font-semibold">Company</h3>
-             <ul className="space-y-2">
-               <li><Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">About Us</Link></li>
-               <li><Link href="/projects" className="text-muted-foreground hover:text-foreground transition-colors">All Projects</Link></li>
-               <li><Link href="/clients" className="text-muted-foreground hover:text-foreground transition-colors">Clients & Testimonials</Link></li>
-               <li><Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link></li>
-               <li><Link href="/donate" className="text-muted-foreground hover:text-foreground transition-colors">Donate</Link></li>
-             </ul>
-           </div>
-
-           {/* Programs */}
-           <div className="space-y-4">
-             <h3 className="text-lg font-semibold">Programs</h3>
-             <ul className="space-y-2">
-               <li><Link href="/fellows" className="text-muted-foreground hover:text-foreground transition-colors">Fellows Program</Link></li>
-               <li><Link href="/mentors" className="text-muted-foreground hover:text-foreground transition-colors">Mentors</Link></li>
-               <li><Link href="/ai-for-good" className="text-muted-foreground hover:text-foreground transition-colors">AI for Good</Link></li>
-             </ul>
-           </div>
-
-           {/* Platform */}
-           <div className="space-y-4">
-             <h3 className="text-lg font-semibold">Platform</h3>
-             <ul className="space-y-2">
-               <li><Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">Blog</Link></li>
-               <li><Link href="/books" className="text-muted-foreground hover:text-foreground transition-colors">Books</Link></li>
-               {/* Temporarily hidden until the notes section is ready. */}
-               {/* <li><Link href="/notes" className="text-muted-foreground hover:text-foreground transition-colors">Notes</Link></li> */}
-               <li><Link href="/ai-for-good" className="text-muted-foreground hover:text-foreground transition-colors">AI for Good</Link></li>
-               <li><Link href="/videos" className="text-muted-foreground hover:text-foreground transition-colors">Videos</Link></li>
-               {/* Temporarily hidden until the newsletter is live again. */}
-               {/* <li><Link href="/substack" className="text-muted-foreground hover:text-foreground transition-colors">Newsletter</Link></li> */}
-             </ul>
-           </div>
-
-           {/* Resources */}
-           <div className="space-y-4">
-             <h3 className="text-lg font-semibold">Resources</h3>
-             <ul className="space-y-2">
-               <li><Link href="/resources" className="text-muted-foreground hover:text-foreground transition-colors font-medium">Student AI Resources</Link></li>
-               <li><Link href="https://www.youtube.com/@humanitariansai" className="text-muted-foreground hover:text-foreground transition-colors">YouTube</Link></li>
-               <li><Link href="https://humanitariansai.substack.com/" className="text-muted-foreground hover:text-foreground transition-colors">Substack</Link></li>
-               <li><Link href="https://open.spotify.com/artist/3cj3R4pDpYQHaWx0MM2vFV" className="text-muted-foreground hover:text-foreground transition-colors">Spotify</Link></li>
-               <li><Link href="https://music.apple.com/us/artist/humanitarians-ai/1781414009" className="text-muted-foreground hover:text-foreground transition-colors">Apple Music</Link></li>
-               <li><Link href="https://podcast.humanitarians.ai/" className="text-muted-foreground hover:text-foreground transition-colors">Lyrical Literacy Podcast</Link></li>
-               <li><Link href="https://www.musinique.com/" className="text-muted-foreground hover:text-foreground transition-colors">Musinique</Link></li>
-             </ul>
-           </div>
-
-           {/* Projects */}
-           <div className="space-y-4">
-             <h3 className="text-lg font-semibold">Projects</h3>
-             <ul className="space-y-2">
-               <li><Link href="/projects" className="text-muted-foreground hover:text-foreground transition-colors font-medium">All Projects</Link></li>
-               <li><Link href="/aiskunkworks" className="text-muted-foreground hover:text-foreground transition-colors">AI Skunkworks</Link></li>
-               <li><Link href="/80-days-to-stay" className="text-muted-foreground hover:text-foreground transition-colors">80 Days to Stay</Link></li>
-               {/* Dayhoff link disabled 2026-09-01: www.mutant.org times out (Ad Grants broken-link audit). Restore when the domain is back. */}
-               {/* <li><a href="https://www.mutant.org" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">Dayhoff</a></li> */}
-               <li><Link href="/dewey" className="text-muted-foreground hover:text-foreground transition-colors">Dewey</Link></li>
-               <li><a href="https://www.irreducibly.xyz" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">Irreducibly Human</a></li>
-               <li><Link href="/lyrical-literacy" className="text-muted-foreground hover:text-foreground transition-colors">Lyrical Literacy</Link></li>
-               <li><Link href="/madison" className="text-muted-foreground hover:text-foreground transition-colors">Madison</Link></li>
-               <li><a href="https://www.medhavy.com/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">Medhavy</a></li>
-               <li><a href="https://www.musinique.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">Musinique</a></li>
-               <li><a href="https://www.mycroft.biz" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">Mycroft</a></li>
-               <li><Link href="/popper" className="text-muted-foreground hover:text-foreground transition-colors">Popper</Link></li>
-               {/* TODO: Revisit the Wilkes footer link later. */}
-               {/* <li><a href="https://www.wilkes.dev" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">Wilkes</a></li> */}
-             </ul>
-           </div>
+         <div className="md:col-span-9 min-w-0 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-x-6 gap-y-8">
+           {footerSections.map(section => (
+             <div key={section.title} className="space-y-4 min-w-0 break-words">
+               <h3 className="text-lg font-semibold">{section.title}</h3>
+               <ul className="space-y-2">
+                 {section.links.map(link => (
+                   <li key={link.label}><Link href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">{link.label}</Link></li>
+                 ))}
+               </ul>
+             </div>
+           ))}
 
            {/* Legal & Privacy */}
            <div className="space-y-4">

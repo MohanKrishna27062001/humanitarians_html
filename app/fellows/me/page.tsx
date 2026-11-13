@@ -201,12 +201,14 @@ export default function FellowDashboard() {
   async function handleLogout() {
     setLogoutError('')
     try {
-      const res = await fetch('/api/fellows/auth/logout', { method: 'POST' })
-      if (!res.ok) throw new Error('Sign out could not be confirmed. Please try again.')
+      const response = await fetch('/api/fellows/auth/logout', { method: 'POST' })
+      if (!response.ok) {
+        const result = await response.json()
+        setLogoutError(result.error || 'Sign-out could not be confirmed. Please try again.')
+        return
+      }
       router.push('/fellows')
-    } catch {
-      setLogoutError('Sign out could not be confirmed. Please try again.')
-    }
+    } catch { setLogoutError('Sign-out could not be confirmed. Please try again.') }
   }
 
   if (loading) return <div className="container px-4 md:px-6 mx-auto py-12"><p className="text-muted-foreground">Loading...</p></div>
@@ -224,9 +226,10 @@ export default function FellowDashboard() {
                 <Button asChild variant="outline" size="sm"><Link href="/ledger">Timesheets with evidence</Link></Button>
               )}
               <Button variant="outline" size="sm" onClick={handleLogout}>Sign Out</Button>
-              {logoutError && <p role="alert" className="text-destructive">{logoutError}</p>}
             </div>
           </div>
+
+          {logoutError && <p role="alert" className="mb-4 text-destructive">{logoutError}</p>}
 
           {/* Preview card */}
           <Card className="mb-8">

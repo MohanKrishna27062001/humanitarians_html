@@ -3,7 +3,7 @@ title: "Dewey: Humanitarians AI's  Educational AI Framework"
 seoTitle: "Dewey: Humanitarians AI's Educational AI Framework"
 description: "Dewey is Humanitarians AI's open-source framework that orchestrates specialized AI agents like Ada, Newton, and Grace to personalize learning."
 summary: "Dewey is Humanitarians AI's open-source educational framework that coordinates specialized agents, from a calculus tutor to a physics chatbot, into a unified learning system."
-keywords: ["dewey humanitarians ai framework", "medhavi intelligent ai books", "ada calculus learning assistant", "newton physics chatbot ai", "grace algorithms chatbot ai", "botspeak ai communication tutorial", "socratic dialogue ai education", "open source educational ai agents"]
+keywords: ["dewey humanitarians ai framework", "Medhavy intelligent ai books", "ada calculus learning assistant", "newton physics chatbot ai", "grace algorithms chatbot ai", "botspeak ai communication tutorial", "socratic dialogue ai education", "open source educational ai agents"]
 generated: "article"
 ---
 
@@ -19,7 +19,7 @@ The choice to give the framework a face, a designed character rather than an abs
 
 ## The agents Dewey currently coordinates
 
-The framework already supports a range of groundbreaking projects across education. The Medhavi projects build intelligent AI books that adapt to individual learners, addressing what the framework describes as a "chicken and egg" problem in education by guiding conversations through dynamic Socratic dialogue rather than static content delivery. Ada is a calculus learning assistant that provides step-by-step guidance through complex mathematical concepts. Newton is a physics chatbot that incorporates dynamic simulations to help visualize scientific principles. Grace is an algorithms chatbot that simulates computational processes with interactive visualizations. Botspeak focuses on teaching effective communication with AI through practical tutorials, treating AI fluency itself as a skill worth deliberately teaching. Case Crackers enhances management education with customized case studies and simulations, extending the same orchestration approach into business education rather than confining it to STEM subjects.
+The framework already supports a range of groundbreaking projects across education. The Medhavy projects build intelligent AI books that adapt to individual learners, addressing what the framework describes as a "chicken and egg" problem in education by guiding conversations through dynamic Socratic dialogue rather than static content delivery. Ada is a calculus learning assistant that provides step-by-step guidance through complex mathematical concepts. Newton is a physics chatbot that incorporates dynamic simulations to help visualize scientific principles. Grace is an algorithms chatbot that simulates computational processes with interactive visualizations. Botspeak focuses on teaching effective communication with AI through practical tutorials, treating AI fluency itself as a skill worth deliberately teaching. Case Crackers enhances management education with customized case studies and simulations, extending the same orchestration approach into business education rather than confining it to STEM subjects.
 
 Each of these agents targets a different subject and a different kind of learner, from someone struggling through an introductory calculus problem to a management student working through a case study. What they share is the underlying design philosophy: guide the learner through the reasoning rather than simply hand over an answer.
 
@@ -31,9 +31,9 @@ The individual agents are each useful on their own, but the framework's real con
 
 - Dewey is Humanitarians AI's open-source framework for orchestrating specialized educational AI agents.
 - It is named after philosopher John Dewey and designed around his experiential learning philosophy.
-- Current agents under the framework include Medhavi (adaptive AI books), Ada (calculus), Newton (physics), Grace (algorithms), Botspeak (AI communication), and Case Crackers (management case studies).
+- Current agents under the framework include Medhavy (adaptive AI books), Ada (calculus), Newton (physics), Grace (algorithms), Botspeak (AI communication), and Case Crackers (management case studies).
 - The framework's central value is its orchestration layer, which coordinates agents to work together rather than as isolated tools.
-- Medhavi's AI books use dynamic Socratic dialogue to adapt to individual learners.
+- Medhavy's AI books use dynamic Socratic dialogue to adapt to individual learners.
 
 ## Who this is for
 

@@ -11,7 +11,9 @@
     "typecheck:timesheets": "tsc --project tests/timesheets/tsconfig.json --noEmit",
     "test:timesheets:browser": "node --import tsx tests/timesheets/browser-smoke.mts",
     "test:profile-links:browser": "node --import tsx tests/timesheets/profile-links-browser.mts",
-    "test:roster:browser": "node --import tsx tests/timesheets/roster-browser.mts"
+    "test:roster:browser": "node --import tsx tests/timesheets/roster-browser.mts",
+    "test:developer-access": "node --import tsx --test tests/developer-access/*.test.ts",
+    "typecheck:developer-access": "tsc -p tests/developer-access/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -68,8 +70,10 @@
     "cmdk": "1.0.4",
     "d3": "^7.9.0",
     "date-fns": "4.1.0",
+    "dompurify": "^3.4.17",
     "embla-carousel-react": "8.5.1",
     "input-otp": "1.4.1",
+    "jsdom": "26.1.0",
     "lucide-react": "^0.454.0",
     "next": "^15.5.24",
     "next-themes": "latest",
@@ -93,6 +97,7 @@
     "@electric-sql/pglite": "^0.5.11",
     "@playwright/test": "^1.64.1",
     "@types/adm-zip": "^0.5.8",
+    "@types/jsdom": "21.1.7",
     "@types/node": "^22.15.31",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

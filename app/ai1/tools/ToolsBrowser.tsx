@@ -69,6 +69,8 @@ export default function ToolsBrowser({ tools, filterTags = [] }: { tools: Tool[]
                 </CardContent>
               </Card>
             )
+            // Preserve the documentation text without linking the retired project.
+            if (/addams/i.test(`${tool.slug} ${tool.name} ${href || ""}`)) return <div key={tool.id}>{cardContent}</div>
             if (isArtifact) return <Link key={tool.id} href={href!}>{cardContent}</Link>
             return <a key={tool.id} href={href || '#'} target="_blank" rel="noopener noreferrer">{cardContent}</a>
           })}

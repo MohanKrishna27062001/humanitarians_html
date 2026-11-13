@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { neon } from '@neondatabase/serverless'
+import { sql as db } from '@/lib/db'
 import videoData from '@/data/youtube/videos.json'
 import playlistData from '@/data/youtube/playlists.json'
 
@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/dev`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/donate`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE_URL}/fellows`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    ...['agents', 'research', 'homes-of-hope', 'jung-ai', 'botspeak'].map(route => ({ url: `${BASE_URL}/${route}`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${BASE_URL}/projects`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/reports`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/substack`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
@@ -45,7 +46,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   try {
-    const db = neon(process.env.DATABASE_URL!)
 
     // Blog posts
     const blogPosts = await db`
