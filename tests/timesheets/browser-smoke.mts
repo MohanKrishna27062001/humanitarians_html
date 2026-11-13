@@ -13,6 +13,8 @@ import { db, setupSynthetic, actors, cookies, strictCookies } from "./fixture";
 import * as index from "../../app/api/timesheets/route";
 import * as detail from "../../app/api/timesheets/[id]/route";
 import * as exported from "../../app/api/timesheets/[id]/export/route";
+import * as login from "../../app/api/fellows/auth/login/route";
+import { hashPassword } from "../../lib/fellow-auth";
 const temp = await mkdtemp(join(tmpdir(), "ledger-ui-"));
 const out = "docs/timesheets/screenshots";
 await mkdir(out, { recursive: true });
@@ -50,9 +52,11 @@ await build({
     },
   ],
 });
+// Run the Tailwind CLI through Node so this also works on Windows.
 execFileSync(
-  "node_modules/.bin/tailwindcss",
+  process.execPath,
   [
+    "node_modules/tailwindcss/lib/cli.js",
     "-i",
     "app/globals.css",
     "-o",
@@ -94,7 +98,9 @@ const server = createServer(async (req, res) => {
         : {}),
     });
     let response: Response;
-    if (req.url === "/api/timesheets")
+    if (req.url === "/api/fellows/auth/login" && req.method === "POST")
+      response = await login.POST(request);
+    else if (req.url === "/api/timesheets")
       response =
         req.method === "POST"
           ? await index.POST(request)
@@ -113,7 +119,11 @@ const server = createServer(async (req, res) => {
           ? await detail.POST(request, ctx)
           : await detail.GET(request, ctx);
     }
-    res.writeHead(response.status, Object.fromEntries(response.headers));
+    // Forward each Set-Cookie separately (sign-in sets several cookies).
+    const headers: Record<string, string | string[]> = Object.fromEntries(response.headers);
+    const setCookies = response.headers.getSetCookie();
+    if (setCookies.length) headers["set-cookie"] = setCookies;
+    res.writeHead(response.status, headers);
     res.end(await response.text());
   } catch (e) {
     res.writeHead(500);
@@ -122,12 +132,16 @@ const server = createServer(async (req, res) => {
   }
 });
 await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-base = "http://127.0.0.1:" + (server.address() as { port: number }).port;
+// "localhost", not 127.0.0.1: NextRequest normalizes the loopback IP to localhost,
+// and the sign-in origin check compares the browser's Origin with that URL.
+base = "http://localhost:" + (server.address() as { port: number }).port;
 const browser = await chromium.launch({
   headless: true,
   executablePath:
     process.env.CHROME_PATH ||
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    (process.platform === "win32"
+      ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+      : "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
 });
 try {
   const context = await browser.newContext({
@@ -162,7 +176,37 @@ try {
       page.getByRole("heading", { name: "Fellow · Demo project" }),
     ).toBeVisible();
   }
-  await as(actors.fellow);
+  // Real password sign-in through the login API (not injected cookies): a wrong
+  // password is refused; the right one issues the work-record session used below.
+  const password = "synthetic-volunteer-password";
+  await db.query("UPDATE fellows SET password_hash=$1 WHERE id=$2", [
+    await hashPassword(password),
+    actors.fellow,
+  ]);
+  await context.clearCookies();
+  await page.goto(base);
+  const signIn = (pw: string) =>
+    page.evaluate(
+      async ([email, pw]) =>
+        (
+          await fetch("/api/fellows/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password: pw }),
+          })
+        ).status,
+      [actors.fellow + "@example.org", pw],
+    );
+  assert.equal(await signIn("wrong-password"), 401);
+  assert.equal(await signIn(password), 200);
+  const issued = Object.fromEntries(
+    (await context.cookies()).map((c) => [c.name, c.value]),
+  );
+  assert.ok(issued.timesheet_session, "sign-in must issue a work-record session");
+  strictCookies.set(actors.fellow, issued.timesheet_session);
+  cookies.set(actors.fellow, issued.fellow_session);
+  await page.reload();
+  await expect(page.getByText("Signed in as")).toBeVisible();
   await page.getByLabel("Assigned project").selectOption(actors.project);
   await page.getByLabel("Week starting Monday").fill(week);
   await page.getByRole("button", { name: "Create draft", exact: true }).click();
@@ -304,9 +348,97 @@ try {
     path: out + "/04-mobile-amendment.png",
     fullPage: true,
   });
+  await page.setViewportSize({ width: 1360, height: 1100 });
+
+  // Self-approval: the PM submits their own timesheet on the project they manage.
+  // The UI offers no review controls, and the API refuses a direct approval.
+  await as(actors.pm);
+  await page.getByLabel("Assigned project").selectOption(actors.project);
+  await page.getByLabel("Week starting Monday").fill(week);
+  await page.getByRole("button", { name: "Create draft", exact: true }).click();
+  await page.getByRole("button", { name: "Add work entry", exact: true }).click();
+  await page.getByLabel("Hours (H:MM or decimal)").fill("0:45");
+  await page
+    .getByLabel("What I worked on")
+    .fill("Planned the synthetic sprint and reviewed the team's evidence.");
+  await page
+    .getByLabel("Evidence link 1", { exact: true })
+    .fill("https://github.com/example/demo/pull/7");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByRole("status").first()).toContainText("Saved");
+  await page.getByLabel(/^I entered these records/).check();
+  await page
+    .getByRole("button", { name: "Submit version 1 to supervisor", exact: true })
+    .click();
+  await expect(page.getByText("submitted", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Approve version/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Return version/ })).toHaveCount(0);
+  const selfApproval = await page.evaluate(async () => {
+    const index = await (await fetch("/api/timesheets")).json();
+    const mine = index.sheets.find((s: any) => s.own && s.state === "submitted");
+    const r = await fetch("/api/timesheets/" + mine.id, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        operation: "approve",
+        expected: mine.lock_version,
+        request_id: crypto.randomUUID(),
+        body: {
+          reviewed_entry_ids: [],
+          discussion_date: new Date().toISOString().slice(0, 10),
+          discussion_confirmed: true,
+          evidence_reviewed: true,
+          note: "Trying to approve my own hours.",
+        },
+      }),
+    });
+    const after = await (await fetch("/api/timesheets/" + mine.id)).json();
+    const latest = after.versions[after.versions.length - 1];
+    return { status: r.status, state: latest.state, reviewed_by: latest.reviewed_by };
+  });
+  assert.ok(selfApproval.status >= 400, "self-approval must be refused");
+  assert.equal(selfApproval.state, "submitted");
+  assert.equal(selfApproval.reviewed_by, null);
+  await page.screenshot({ path: out + "/08-self-approval-blocked.png", fullPage: true });
+
+  // 24-hour limit across projects: the fellow also joins the other project and
+  // claims 23 hours on the same day as 1:15 already approved on the first.
+  await db.query(
+    "INSERT INTO fellow_projects(fellow_id,project_id,role) VALUES($1,$2,'fellow')",
+    [actors.fellow, actors.otherProject],
+  );
+  await as(actors.fellow);
+  await page.getByLabel("Assigned project").selectOption(actors.otherProject);
+  await page.getByLabel("Week starting Monday").fill(week);
+  await page.getByRole("button", { name: "Create draft", exact: true }).click();
+  await page.getByRole("button", { name: "Add work entry", exact: true }).click();
+  await page.getByLabel("Hours (H:MM or decimal)").fill("23:00");
+  await page
+    .getByLabel("What I worked on")
+    .fill("Synthetic over-claim used to test the cross-project daily limit.");
+  await page
+    .getByLabel("Evidence link 1", { exact: true })
+    .fill("https://github.com/example/other/commit/def");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByRole("status").first()).toContainText("Saved");
+  await page.getByLabel(/^I entered these records/).check();
+  await page
+    .getByRole("button", { name: "Submit version 1 to supervisor", exact: true })
+    .click();
+  await expect(page.getByRole("alert").first()).toContainText(
+    "across all your projects, which is more than 24 hours",
+  );
+  await expect(page.getByText("draft", { exact: true }).first()).toBeVisible();
+  await page.screenshot({ path: out + "/09-daily-limit.png", fullPage: true });
+
+  // "My hours": the fellow's own approved / waiting / returned / draft totals.
+  await as(actors.fellow);
+  await expect(page.getByRole("heading", { name: "My hours" })).toBeVisible();
+  await page.screenshot({ path: out + "/10-my-hours.png", fullPage: true });
+
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: real UI + dedicated synthetic sessions + actual API handlers + PostgreSQL; create/save/attest/submit/return/correct/resubmit/review/approve/export/amend; cross-team denial; mobile overflow; zero page errors.",
+    "PASS: real UI + actual API handlers + PostgreSQL; password sign-in (wrong password refused); create/save/attest/submit/return-with-reason/correct/resubmit/review/approve/export/amend; cross-team denial; self-approval hidden in UI and refused by API; 24-hour cross-project limit; My hours; mobile overflow; zero page errors.",
   );
 } catch (error) {
   const pages = browser.contexts().flatMap((c) => c.pages());
