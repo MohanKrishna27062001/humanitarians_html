@@ -238,3 +238,56 @@ test("legacy archive retains former-member hours and archived projects without a
     1,
   );
 });
+test("HTTP: own list carries My hours data; a day over 24 hours across projects is explained", async () => {
+  const mine = await (await index.GET(req("/api/timesheets", f))).json();
+  const own = mine.sheets.find((s: any) => s.own && s.project_id === p);
+  assert.equal(own.state, "approved");
+  assert.deepEqual(own.approved_days, [{ date: week, minutes: 75 }]);
+  assert.deepEqual(own.current_days, [{ date: week, minutes: 75 }]);
+  // The supervisor's list does not carry another person's day-by-day minutes.
+  // (The first test removed the supervisor's assignment; restore it here.)
+  await db.query(
+    "INSERT INTO fellow_projects(fellow_id,project_id,role) VALUES($1,$2,'pm')",
+    [pm, p],
+  );
+  const theirs = await (await index.GET(req("/api/timesheets", pm))).json();
+  const seen = theirs.sheets.find((s: any) => s.id === own.id);
+  assert.equal(seen.current_days, null);
+  assert.equal(seen.approved_days, null);
+  // On a second project, 23 h on the same day plus the approved 1:15 is over 24 hours.
+  // (A new project: the legacy test archived the other one.)
+  const p3 = randomUUID();
+  await db.query(
+    "INSERT INTO projects(id,name,slug,elevator_pitch,url) VALUES($1::uuid,'Third project',$1::text,'Synthetic','https://example.org')",
+    [p3],
+  );
+  await db.query(
+    "INSERT INTO fellow_projects(fellow_id,project_id,role) VALUES($1,$2,'fellow')",
+    [f, p3],
+  );
+  const created = await index.POST(
+    req("/api/timesheets", f, data("create", { project_id: p3, week })),
+  );
+  assert.equal(created.status, 201, await created.clone().text());
+  const { id } = await created.json();
+  const e = {
+    id: randomUUID(),
+    date: week,
+    minutes: 1380,
+    description: "Synthetic long day",
+    evidence: ["https://example.org/long-day"],
+  };
+  const saved = await detail.POST(
+    req("/api/timesheets/" + id, f, data("save", { entries: [e] }, 0)),
+    ctx(id),
+  );
+  assert.equal(saved.status, 200, await saved.text());
+  const refused = await detail.POST(
+    req("/api/timesheets/" + id, f, data("submit", { attested: true }, 1)),
+    ctx(id),
+  );
+  assert.equal(refused.status, 400);
+  const { error } = await refused.json();
+  assert.match(error, new RegExp(week));
+  assert.match(error, /24:15 across all your projects, which is more than 24 hours/);
+});

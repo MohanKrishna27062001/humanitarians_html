@@ -45,6 +45,10 @@ export function failure(error: unknown) {
       },
       409,
     );
+  // Cross-project daily total (sql/006): the message names only the
+  // fellow's own date and hours, so it is safe to show to them.
+  if (code === "HT001")
+    return json({ error: (error as Error).message }, 400);
   if (code?.startsWith("22") || code === "23514")
     return json(
       {

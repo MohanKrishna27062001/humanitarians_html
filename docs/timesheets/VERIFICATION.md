@@ -48,3 +48,15 @@ Executed 44 synthetic tests, all passing: the previous 35 plus three roster chec
 `npm run test:roster:browser` passed against the actual React roster page and SQL handler, with authorization explicitly stubbed only in the loopback harness. It verifies project-manager filtering/counts, project search, board-unknown explanation, narrow-screen width and no React errors. These are synthetic UI/SQL checks, not a deployed Next cookie-auth integration test. New screenshots were visually reviewed: [PM filter](screenshots/05-roster-project-managers.png), [board unknown](screenshots/06-roster-board-unknown.png), [mobile](screenshots/07-roster-mobile.png). They are local files, not confirmed Library uploads. The user-supplied roster screenshot could not be materialized locally because its transfer lacked a download URL; the changes followed inspected source/UI and explicit user requirements instead.
 
 The first loopback attempt was blocked by the filesystem execution sandbox; the explicit local-browser escalation was approved and the check then passed. No production database, SMTP, Blob file or credential was touched by these tests. Real Blob delivery and profile persistence after upload await approved storage provisioning and a scoped test. Existing standalone admin/video upload paths were not broadened or security-certified. The earlier timesheet-browser workflow and multi-connection PostgreSQL limitation above remain as documented.
+
+## Daily total across projects and "My hours" — November 9
+
+Branch `timesheets/daily-hours-and-summary`, based on `codex/evidence-timesheets`. Synthetic data only; no production database, deployment or role change.
+
+| Check | Result | What was exercised |
+|---|---|---|
+| `npm run test:timesheets` | PASS: 52 tests, 0 failures | The previous 48 plus 4 new: over 24 hours on one date across two projects is refused with the date and total named, exactly 24 hours is accepted; approved hours count while drafts and returned versions do not; an amendment is not counted against its own earlier version; the list API returns day-by-day minutes only for the signed-in fellow's own timesheets and the submit route returns the daily-total message (400). |
+| `npm run typecheck:timesheets` | PASS | |
+| Browser flow | PASS | The full browser-smoke flow plus a "My hours" box check and a refused 23:00 submission on a second project, run from a local Windows-adapted copy of `browser-smoke.mts` (Windows Chrome path; Tailwind CLI called through Node). The copy and its screenshots are not committed; the committed screenshots are unchanged. |
+
+The cross-project check is a database trigger (`sql/006_timesheet_daily_total.sql`) that runs inside the existing submit transaction and serializes one fellow's submissions with a transaction-scoped advisory lock. Concurrent submissions over separate connections were not tested (same single-engine PGlite limit as above).

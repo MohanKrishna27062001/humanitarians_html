@@ -36,7 +36,12 @@ type Summary = {
   project_name: string;
   own: boolean;
   state: State;
+  // Own timesheets only (null otherwise): minutes per work date of the
+  // current version and of the latest approved version.
+  current_days?: Day[] | null;
+  approved_days?: Day[] | null;
 };
+type Day = { date: string; minutes: number };
 type Sheet = Summary & {
   can_review: boolean;
   versions: Version[];
@@ -226,6 +231,7 @@ export default function Timesheets() {
             </>
           ) : (
             <>
+              <MyHours sheets={index.sheets} />
               <form
                 className="border p-4 space-y-3"
                 onSubmit={(e) => {
@@ -312,6 +318,80 @@ export default function Timesheets() {
           )}
         </>
       )}
+    </section>
+  );
+}
+// The signed-in fellow's own hours by review state, this month and in total.
+// Approved hours come from each timesheet's latest approved version; the other
+// rows from the current version, so an amendment in progress shows in both.
+function MyHours({ sheets }: { sheets: Summary[] }) {
+  const own = sheets.filter((s) => s.own);
+  if (!own.length) return null;
+  const month = today().slice(0, 7);
+  const rows: { label: string; days: (s: Summary) => Day[] | null | undefined }[] = [
+    { label: "Approved", days: (s) => s.approved_days },
+    {
+      label: "Waiting for review",
+      days: (s) => (s.state === "submitted" ? s.current_days : null),
+    },
+    {
+      label: "Returned – needs correcting",
+      days: (s) => (s.state === "returned" ? s.current_days : null),
+    },
+    {
+      label: "Draft – not submitted yet",
+      days: (s) => (s.state === "draft" ? s.current_days : null),
+    },
+  ];
+  const total = (days: (s: Summary) => Day[] | null | undefined, thisMonth: boolean) =>
+    own.reduce(
+      (sum, s) =>
+        sum +
+        (days(s) || []).reduce(
+          (t, d) => t + (!thisMonth || d.date.startsWith(month) ? d.minutes : 0),
+          0,
+        ),
+      0,
+    );
+  const returned = own.filter((s) => s.state === "returned").length;
+  return (
+    <section aria-labelledby="my-hours" className="border p-4 space-y-3">
+      <h2 id="my-hours" className="text-xl font-semibold">
+        My hours
+      </h2>
+      <table className="w-full text-left">
+        <thead>
+          <tr>
+            <th scope="col">Status</th>
+            <th scope="col">This month</th>
+            <th scope="col">All time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.label}>
+              <th scope="row" className="font-normal">
+                {r.label}
+              </th>
+              <td>{duration(total(r.days, true))}</td>
+              <td>{duration(total(r.days, false))}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {returned > 0 && (
+        <p className="border border-amber-600 p-2">
+          {returned === 1
+            ? "1 returned timesheet needs correcting."
+            : returned + " returned timesheets need correcting."}{" "}
+          Open {returned === 1 ? "it" : "them"} under &ldquo;My
+          timesheets&rdquo; to see your supervisor&rsquo;s reason.
+        </p>
+      )}
+      <p className="text-sm">
+        &ldquo;This month&rdquo; counts work dates in {month} (UTC). Approved
+        hours come from each timesheet&rsquo;s latest approved version.
+      </p>
     </section>
   );
 }

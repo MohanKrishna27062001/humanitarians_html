@@ -24,6 +24,7 @@ let week: string, today: string;
 before(async () => {
   await db.exec(await readFile("sql/001_fellows_projects.sql", "utf8"));
   await db.exec(await readFile("sql/004_evidence_timesheets.sql", "utf8"));
+  await db.exec(await readFile("sql/006_timesheet_daily_total.sql", "utf8"));
   const r = await db.query<{ day: string }>(
     "SELECT to_char((now() AT TIME ZONE 'UTC')::date,'YYYY-MM-DD') AS day",
   );
@@ -454,4 +455,58 @@ test("duplicate weekly timesheets and future or non-Monday weeks rejected", asyn
     }),
     "22023",
   );
+});
+
+// sql/006: one day holds at most 24 hours across all of a fellow's projects.
+async function sheetWith(project: string, minutes: number) {
+  const s = await command(ids.fellow, null, "create", { project_id: project, week }),
+    e = entry({ minutes });
+  await command(ids.fellow, s.id, "save", { entries: [e] });
+  return { s, e };
+}
+const submit = (id: string) => command(ids.fellow, id, "submit", { attested: true });
+async function onBothProjects() {
+  await db.query(
+    "INSERT INTO fellow_projects(fellow_id,project_id,role) VALUES($1,$2,'fellow')",
+    [ids.fellow, ids.otherProject],
+  );
+}
+test("daily total across projects over 24 hours blocks submission and names the day", async () => {
+  await onBothProjects();
+  const a = await sheetWith(ids.project, 600);
+  await submit(a.s.id);
+  const b = await sheetWith(ids.otherProject, 960);
+  await assert.rejects(submit(b.s.id), (e: any) => {
+    assert.equal(e.code, "HT001");
+    assert.match(e.message, new RegExp(week));
+    assert.match(e.message, /26:00/);
+    return true;
+  });
+  assert.equal((await version(b.s.id)).state, "draft");
+  // Exactly 24 hours is allowed once the entry is corrected.
+  await command(ids.fellow, b.s.id, "save", { entries: [{ ...b.e, minutes: 840 }] });
+  await submit(b.s.id);
+  assert.equal((await version(b.s.id)).state, "submitted");
+});
+test("approved hours count toward the daily total; drafts and returned versions do not", async () => {
+  await onBothProjects();
+  const a = await sheetWith(ids.project, 1200);
+  const b = await sheetWith(ids.otherProject, 600);
+  // A is only a draft: B may be submitted.
+  await submit(b.s.id);
+  await command(ids.otherPM, b.s.id, "return", { reason: "Add the meeting notes link" });
+  // B was returned: A may be submitted.
+  await submit(a.s.id);
+  await command(ids.pm, a.s.id, "approve", approval(a.e.id));
+  // A is approved (20 h): B's corrected 10 h no longer fits.
+  await command(ids.fellow, b.s.id, "revise", { reason: "Added the notes link" });
+  await rejects(submit(b.s.id), "HT001");
+});
+test("an amendment is not counted twice against its own earlier version", async () => {
+  const a = await sheetWith(ids.project, 1200);
+  await submit(a.s.id);
+  await command(ids.pm, a.s.id, "approve", approval(a.e.id));
+  await command(ids.fellow, a.s.id, "revise", { reason: "Corrected the description" });
+  await submit(a.s.id);
+  assert.equal((await version(a.s.id, 2)).state, "submitted");
 });

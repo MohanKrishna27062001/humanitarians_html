@@ -5,7 +5,7 @@ This feature replaces manager-authored hours with fellow-authored weekly timeshe
 ## Scope and decisions
 
 - One timesheet per fellow, project and Monday-starting week. No inferred GitHub identity or folder mapping. Fellows supply their own evidence links.
-- H:MM and decimal hours are accepted only when they resolve to whole minutes. Store integer minutes, not floating point hours. At most 24 hours per day within one timesheet, 100 entries per sheet, 10 links per entry. Cross-project overlap is not yet detected; supervisors should check it.
+- H:MM and decimal hours are accepted only when they resolve to whole minutes. Store integer minutes, not floating point hours. At most 24 hours per day within one timesheet, 100 entries per sheet, 10 links per entry. Across projects, submission is refused when one work date would exceed 24 hours, counting the latest submitted or approved version of the fellow's other timesheets (`sql/006_timesheet_daily_total.sql`; drafts and returned versions do not count). Entries have no start/end times, so finer overlap is not detected; supervisors should still check it.
 - Empty/zero-hour drafts are permitted. Submission requires a positive duration, description and at least one evidence URL on every entry. No work means do not fabricate an entry. No zero-work attestation is implemented in this slice.
 - No on-behalf entry path. A manager cannot author, alter or attest a fellow's timesheet. A manager recording their own work needs another assigned manager to approve; there is no self-approval or board override.
 - Draft → submitted → approved/returned. Returned and approved versions remain immutable. A reasoned correction creates a new numbered draft; personal submission and review are required again. A submitted version must be returned by a supervisor before correction. No retroactive approval of legacy data.
@@ -43,6 +43,7 @@ Read scope is in SQL. Exports include all permitted versions, actors, times, att
 ## Files
 
 - `sql/004_evidence_timesheets.sql`: additive schema, database invariants, access predicate and atomic commands.
+- `sql/006_timesheet_daily_total.sql`: submission trigger refusing more than 24 hours on one date across a fellow's projects.
 - `lib/timesheets/session.ts`: dedicated expiring/revocable work-record sessions and shared-admin identity-write freeze.
 - `lib/timesheets/domain.ts`: duration, date, evidence and entry validation; attestation text.
 - `lib/timesheets/server.ts`: verified actor, private responses, scoped detail/export and mutation adapter.
@@ -55,4 +56,4 @@ Read scope is in SQL. Exports include all permitted versions, actors, times, att
 
 The public fellow login still verifies the existing credentials, while work records require the stricter dedicated session described above. No actual account credentials or session keys were changed. Production credential provenance/session policy, role assignment audit, least-privilege database grants and multi-connection load/revocation-race testing still require deployment-environment review. Requests already authenticated before a logout/password change or read-snapshot revocation may finish afterward; this does not promise in-flight cancellation. The embedded PostgreSQL tests serialize calls on one engine; they exercise stale competing actions but do not reproduce separate network connections.
 
-There is no evidence-content verification, cross-project overlapping-time detection, evidence retention policy, automated notification or roster importer overhaul. Exports are JSON, preserving version/history relationships without CSV formula injection. The legacy viewer is intentionally a read-only record view rather than an editable project-management dashboard.
+There is no evidence-content verification, overlapping-time detection beyond the 24-hour daily total, evidence retention policy, automated notification or roster importer overhaul. Exports are JSON, preserving version/history relationships without CSV formula injection. The legacy viewer is intentionally a read-only record view rather than an editable project-management dashboard.
