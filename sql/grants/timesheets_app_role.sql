@@ -1,5 +1,5 @@
 -- Grants the website's database role exactly what the timesheet code uses.
--- Run AFTER 004 and 007, as the role that ran them (the table owner).
+-- Run AFTER 004, 007 and 008, as the role that ran them (the table owner).
 --
 -- 1. Run sql/checks/timesheets_preflight.sql and compare the two 'roles' rows:
 --      'connected as'            = the role the SQL editor uses (owner)
@@ -24,8 +24,9 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = app_role) THEN
     RAISE EXCEPTION 'Role % does not exist. Nothing was changed.', app_role;
   END IF;
-  IF to_regclass('public.timesheets') IS NULL OR to_regprocedure('public.timesheet_check_daily_total()') IS NULL THEN
-    RAISE EXCEPTION 'Apply 004 and 007 before granting. Nothing was changed.';
+  IF to_regclass('public.timesheets') IS NULL OR to_regprocedure('public.timesheet_check_daily_total()') IS NULL
+     OR to_regclass('public.identity_admin_grants') IS NULL THEN
+    RAISE EXCEPTION 'Apply 004, 007 and 008 before granting. Nothing was changed.';
   END IF;
   -- Sign-in sessions for work records: created, checked, revoked.
   EXECUTE format('GRANT SELECT, INSERT, UPDATE ON public.timesheet_sessions TO %I', app_role);
@@ -42,6 +43,11 @@ BEGIN
   EXECUTE format('GRANT EXECUTE ON FUNCTION public.timesheet_validate_entries(jsonb,date,boolean) TO %I', app_role);
   EXECUTE format('GRANT EXECUTE ON FUNCTION public.timesheet_can_read(uuid,uuid,uuid) TO %I', app_role);
   EXECUTE format('GRANT EXECUTE ON FUNCTION public.timesheet_can_read_project(uuid,uuid) TO %I', app_role);
+  -- Identity administration (008): the app checks grants (read only; grants are made
+  -- by the database owner) and appends audit rows.
+  EXECUTE format('GRANT SELECT ON public.identity_admin_grants TO %I', app_role);
+  EXECUTE format('GRANT SELECT, INSERT ON public.identity_admin_audit TO %I', app_role);
+  EXECUTE format('GRANT USAGE ON SEQUENCE public.identity_admin_audit_id_seq TO %I', app_role);
   RAISE NOTICE 'Timesheet grants applied to %.', app_role;
 END $grants$;
 COMMIT;

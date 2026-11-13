@@ -4,10 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { neonConfig } from "@neondatabase/serverless";
 import { createHash } from "node:crypto";
 import { hashPassword } from "../../lib/fellow-auth";
-import {
-  createTimesheetSession,
-  legacyIdentityWriteDenied,
-} from "../../lib/timesheets/session";
+import { createTimesheetSession } from "../../lib/timesheets/session";
 import * as login from "../../app/api/fellows/auth/login/route";
 import * as logout from "../../app/api/fellows/auth/logout/route";
 import * as index from "../../app/api/timesheets/route";
@@ -64,7 +61,7 @@ test("legacy signed cookies and shared-admin cookies cannot upgrade into timeshe
   }
 });
 
-test("shared-admin identity, password, deletion and role-writing routes freeze before side effects", async () => {
+test("shared-admin password cannot change identities, passwords, deletion or roles while timesheets are on", async () => {
   const cookie = "admin_session=synthetic-shared-owner",
     ctx = { params: Promise.resolve({ id: actors.fellow }) };
   const beforeRows = (
@@ -136,9 +133,10 @@ test("shared-admin identity, password, deletion and role-writing routes freeze b
     ).rows,
     beforeRoles,
   );
-  process.env.TIMESHEETS_ENABLED = "false";
-  assert.equal(legacyIdentityWriteDenied(), null);
-  process.env.TIMESHEETS_ENABLED = "true";
+  assert.equal(
+    (await db.query<{ n: number }>("SELECT count(*)::int AS n FROM identity_admin_audit")).rows[0].n,
+    0,
+  );
 });
 
 test("fresh password login requires same-origin JSON; server expiry and credential binding revoke access", async () => {

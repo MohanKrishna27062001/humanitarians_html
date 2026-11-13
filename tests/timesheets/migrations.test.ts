@@ -9,7 +9,8 @@ import { PGlite } from "@electric-sql/pglite";
 const file = (path: string) => readFile(path, "utf8");
 const M004 = "sql/004_evidence_timesheets.sql",
   M005 = "sql/005_standard_profile_links.sql",
-  M007 = "sql/007_timesheet_daily_total.sql";
+  M007 = "sql/007_timesheet_daily_total.sql",
+  M008 = "sql/008_identity_admin.sql";
 
 async function productionToday() {
   const db = new PGlite();
@@ -20,12 +21,12 @@ async function productionToday() {
 async function preflight(db: PGlite) {
   const rows = (await db.query<{ check_name: string; item: string; result: string }>(await file("sql/checks/timesheets_preflight.sql"))).rows;
   const get = (check: string) => rows.find((r) => r.check_name === check)!.result;
-  return { rows, m004: get("migration 004"), m005: get("migration 005"), m007: get("migration 007"), data: get("timesheet data") };
+  return { rows, m004: get("migration 004"), m005: get("migration 005"), m007: get("migration 007"), m008: get("migration 008"), data: get("timesheet data") };
 }
 const fingerprint = async (db: PGlite) =>
   (await db.query<{ table_name: string; row_count: number; checksum: string }>(await file("sql/checks/backup_fingerprint.sql"))).rows;
 const applyAll = async (db: PGlite) => {
-  for (const path of [M004, M005, M007]) await db.exec(await file(path));
+  for (const path of [M004, M005, M007, M008]) await db.exec(await file(path));
 };
 
 async function seed(db: PGlite) {
@@ -45,10 +46,11 @@ test("preflight reads a production-shaped database and reports nothing applied",
   assert.equal(p.m004, "not applied");
   assert.equal(p.m005, "not applied");
   assert.equal(p.m007, "not applied");
+  assert.equal(p.m008, "not applied");
   assert.equal(p.data, "no table yet");
 });
 
-test("apply 004, 005, 007 in order: preflight says applied, legacy data is unchanged", async () => {
+test("apply 004, 005, 007, 008 in order: preflight says applied, legacy data is unchanged", async () => {
   const db = await productionToday();
   await seed(db);
   const before = await fingerprint(db);
@@ -57,6 +59,7 @@ test("apply 004, 005, 007 in order: preflight says applied, legacy data is uncha
   assert.equal(p.m004, "applied");
   assert.equal(p.m005, "applied");
   assert.equal(p.m007, "applied");
+  assert.equal(p.m008, "applied");
   assert.equal(p.data, "0");
   const after = await fingerprint(db);
   for (const row of before.filter((r) => r.table_name !== "fellows"))
@@ -71,13 +74,17 @@ test("running 004 or 007 a second time is refused and changes nothing", async ()
   await db.exec("ROLLBACK"); // a failed transaction in the SQL editor is rolled back the same way
   await assert.rejects(db.exec(await file(M007)), /007 is already applied/);
   await db.exec("ROLLBACK");
+  await assert.rejects(db.exec(await file(M008)), /008 is already applied/);
+  await db.exec("ROLLBACK");
   await db.exec(await file(M005)); // 005 is written to be safe to rerun
   assert.deepEqual(await preflight(db), before);
 });
 
-test("007 before 004 is refused; a half-applied 004 is reported as PARTIAL", async () => {
+test("007 or 008 before 004 is refused; a half-applied 004 is reported as PARTIAL", async () => {
   const db = await productionToday();
   await assert.rejects(db.exec(await file(M007)), /007 needs 004 first/);
+  await db.exec("ROLLBACK");
+  await assert.rejects(db.exec(await file(M008)), /008 needs 004 first/);
   await db.exec("ROLLBACK");
   assert.equal((await preflight(db)).m007, "not applied");
   await db.exec(await file(M004));
@@ -126,6 +133,11 @@ test("the website role works with exactly the documented grants, and fails witho
     assert.equal((await db.query<{ state: string }>("SELECT state FROM timesheet_versions WHERE sheet_id=$1", [s.id])).rows[0].state, "approved");
     assert.equal((await db.query<{ ok: boolean }>("SELECT timesheet_can_read_project($1,$2) AS ok", [ids.pm, ids.project])).rows[0].ok, true);
     await db.query("SELECT 1 FROM timesheet_board_viewers");
+    // Identity administration: read grants, append audit; never grant itself.
+    await db.query("SELECT 1 FROM identity_admin_grants");
+    await db.query("INSERT INTO identity_admin_audit(actor_id,grant_id,action,target_id) VALUES($1,$1,'edit',$2)", [ids.pm, ids.fellow]);
+    await assert.rejects(db.query("INSERT INTO identity_admin_grants(fellow_id,granted_by,reason,expires_at) VALUES($1,'x','x',now()+interval '1 day')", [ids.pm]), (e: any) => e.code === "42501");
+    await assert.rejects(db.query("UPDATE identity_admin_audit SET action='x'"), (e: any) => e.code === "42501");
     // Least privilege: no deleting history, no granting board access.
     await assert.rejects(db.query("DELETE FROM timesheet_events"), (e: any) => e.code === "42501");
     await assert.rejects(db.query("INSERT INTO timesheet_board_viewers(fellow_id,granted_by,reason) VALUES($1,'x','x')", [ids.pm]), (e: any) => e.code === "42501");
@@ -165,16 +177,34 @@ test("rollback: refused while timesheet records exist; clean up/down/up when emp
   await seed(clean);
   await applyAll(clean);
   const cleanLegacy = await fingerprint(clean);
+  await clean.exec(await file("sql/rollback/008_down.sql"));
   await clean.exec(await file("sql/rollback/007_down.sql"));
   await clean.exec(await file("sql/rollback/004_down.sql"));
   let p = await preflight(clean);
+  assert.equal(p.m008, "not applied");
   assert.equal(p.m004, "not applied");
   assert.equal(p.m007, "not applied");
   assert.deepEqual(await fingerprint(clean), cleanLegacy, "rollback must not touch legacy tables");
   await clean.exec(await file(M004));
   await clean.exec(await file(M007));
+  await clean.exec(await file(M008));
   p = await preflight(clean);
+  assert.equal(p.m008, "applied");
   assert.equal(p.m004, "applied");
   assert.equal(p.m007, "applied");
   assert.ok(legacy.length > 0);
+});
+
+test("008 rollback refuses once a grant or audit record exists", async () => {
+  const db = await productionToday();
+  const ids = await seed(db);
+  await applyAll(db);
+  await db.query("INSERT INTO identity_admin_grants(fellow_id,granted_by,reason,expires_at) VALUES($1,'Nik','HR roster duty',now()+interval '30 days')", [ids.pm]);
+  assert.equal((await db.query<{ n: number }>("SELECT count(*)::int AS n FROM identity_admin_audit WHERE action='grant'")).rows[0].n, 1);
+  await assert.rejects(db.exec(await file("sql/rollback/008_down.sql")), /Refusing to drop them/);
+  await db.exec("ROLLBACK");
+  await assert.rejects(db.query("DELETE FROM identity_admin_grants"), /do not delete history/);
+  await assert.rejects(db.query("UPDATE identity_admin_grants SET expires_at=now()+interval '99 days'"), /immutable/);
+  await db.query("UPDATE identity_admin_grants SET revoked_at=now(), revoked_by='Nik'");
+  assert.equal((await db.query<{ n: number }>("SELECT count(*)::int AS n FROM identity_admin_audit WHERE action='revoke'")).rows[0].n, 1);
 });

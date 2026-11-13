@@ -89,17 +89,3 @@ export async function revokeTimesheetSession(
   if (token && /^[a-f0-9]{64}$/.test(token))
     await sql`UPDATE timesheet_sessions SET revoked_at=now() WHERE token_hash=${digest(token)} AND revoked_at IS NULL`;
 }
-
-// These older endpoints can mint known-password accounts, reset someone else's
-// password, or rewrite email/PM assignments under the shared owner credential.
-// Freeze them at cutover; an individual-account admin workflow is separate work.
-export function legacyIdentityWriteDenied() {
-  if (process.env.TIMESHEETS_ENABLED !== "true") return null;
-  return NextResponse.json(
-    {
-      error:
-        "Shared-admin account and access changes are frozen while evidence timesheets are enabled. Use a separately approved identity/access process.",
-    },
-    { status: 403, headers: { "Cache-Control": "private, no-store" } },
-  );
-}

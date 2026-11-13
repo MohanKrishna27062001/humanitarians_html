@@ -3,7 +3,7 @@ import {
   normalizeRosterRow,
   existingRosterNote,
 } from "@/lib/fellow-import";
-import { legacyIdentityWriteDenied } from "@/lib/timesheets/session";
+import { identityWriteAccess, auditStatement } from "@/lib/identity-admin";
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { dashboardAccess } from "@/lib/dashboard-auth";
@@ -36,11 +36,13 @@ interface OutputRow {
   member_status: string;
 }
 
+// CSV roster import. Timesheets off: owner admin, temporary passwords in the result
+// CSV (as before). Timesheets on: a named identity admin; no passwords in the result,
+// each created member is audited (lib/identity-admin.ts).
 export async function POST(req: NextRequest) {
-  const frozen = legacyIdentityWriteDenied();
-  if (frozen) return frozen;
-  if (!(await dashboardAccess(req, 'identity-admin')))
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await identityWriteAccess(req, async () => await dashboardAccess(req, 'identity-admin'));
+  if (!access.ok) return access.response;
+  const admin = access.admin;
 
   try {
     const formData = await req.formData();
@@ -133,36 +135,43 @@ export async function POST(req: NextRequest) {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
 
-      const rows = await sql`
-        INSERT INTO fellows (name, slug, email, password_hash, status, joined_date)
-        VALUES (${name}, ${slug}, ${email}, ${password_hash}, ${memberStatus}, now())
-        RETURNING id
-      `;
-      const fellowId = (rows[0] as Record<string, unknown>).id as string;
+      // Each member, their assignment and (timesheets on) the audit row commit together.
+      const fellowId = crypto.randomUUID();
+      const statements = [
+        sql`
+        INSERT INTO fellows (id, name, slug, email, password_hash, status, joined_date)
+        VALUES (${fellowId}, ${name}, ${slug}, ${email}, ${password_hash}, ${memberStatus}, now())
+      `,
+      ];
 
       let note = "";
-      if (projectSlug) {
-        const projectId = projectMap.get(projectSlug);
-        if (projectId) {
-          const fellowRole = role === "pm" ? "pm" : "fellow";
-          await sql`
+      const projectId = projectSlug ? projectMap.get(projectSlug) : undefined;
+      if (projectSlug && !projectId) note = "project not found";
+      if (projectId) {
+        const fellowRole = role === "pm" ? "pm" : "fellow";
+        statements.push(sql`
             INSERT INTO fellow_projects (fellow_id, project_id, role)
             VALUES (${fellowId}, ${projectId}, ${fellowRole})
-          `;
-        } else {
-          note = "project not found";
-        }
+          `);
       }
+      if (admin)
+        statements.push(
+          auditStatement(admin, "import", fellowId, {
+            project: projectId || null,
+            role: projectId ? (role === "pm" ? "pm" : "fellow") : null,
+          }),
+        );
+      await sql.transaction(statements);
 
       output.push({
         name,
         email,
         project_slug: projectSlug,
         role,
-        temp_password: tempPassword,
+        temp_password: admin ? "" : tempPassword,
         status: "created",
         member_status: memberStatus,
-        note,
+        note: admin ? [note, "member sets own password with Forgot password?"].filter(Boolean).join("; ") : note,
       });
       created++;
     }

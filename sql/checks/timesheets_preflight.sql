@@ -1,10 +1,10 @@
 -- READ-ONLY. Safe to run any number of times, on production or a backup branch.
--- Run this BEFORE applying 004, 005 or 007, and again AFTER, and keep both outputs.
+-- Run this BEFORE applying 004, 005, 007 or 008, and again AFTER, and keep both outputs.
 -- It changes nothing: it only reads the system catalogs and counts rows.
 --
 -- How to read the result (one row per check):
 --   prerequisites   every row must say 'ok'
---   004 / 005 / 007 'not applied' -> run that file
+--   004/005/007/008 'not applied' -> run that file
 --                   'applied'     -> skip that file (do NOT run it again)
 --                   'PARTIAL'     -> STOP. Something was half-applied by hand; ask before continuing.
 --   timesheet data  how many timesheet rows exist (decides whether rollback is still possible)
@@ -20,7 +20,11 @@ WITH expected(migration, kind, name) AS (VALUES
   ('004','function','timesheet_command(uuid,uuid,uuid,integer,text,jsonb)'),
   ('004','trigger','timesheet_version_guard'), ('004','trigger','timesheet_event_guard'),
   ('005','column','github_url'), ('005','column','website_url'), ('005','column','youtube_url'),
-  ('007','function','timesheet_check_daily_total()'), ('007','trigger','timesheet_daily_total')
+  ('007','function','timesheet_check_daily_total()'), ('007','trigger','timesheet_daily_total'),
+  ('008','table','identity_admin_grants'), ('008','table','identity_admin_audit'),
+  ('008','index','identity_admin_one_active_grant'), ('008','index','identity_admin_audit_target'),
+  ('008','function','identity_admin_grant_history()'), ('008','function','identity_admin_audit_immutable()'),
+  ('008','trigger','identity_admin_grant_guard'), ('008','trigger','identity_admin_audit_guard')
 ), present AS (
   SELECT migration, name, CASE kind
     WHEN 'table'    THEN to_regclass('public.' || name) IS NOT NULL
