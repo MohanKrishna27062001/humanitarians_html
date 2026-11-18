@@ -14,7 +14,8 @@ DO $guard$ BEGIN
   IF to_regclass('public.timesheet_sessions') IS NULL THEN
     RAISE EXCEPTION '008 needs 004 first. Nothing was changed.';
   END IF;
-  IF to_regclass('public.identity_admin_grants') IS NOT NULL OR to_regclass('public.identity_admin_audit') IS NOT NULL THEN
+  IF to_regclass('public.identity_admin_grants') IS NOT NULL OR to_regclass('public.identity_admin_audit') IS NOT NULL
+     OR to_regclass('public.fellow_email_changes') IS NOT NULL THEN
     RAISE EXCEPTION '008 is already applied. Nothing was changed. Run sql/checks/timesheets_preflight.sql.';
   END IF;
 END $guard$;
@@ -62,5 +63,25 @@ CREATE FUNCTION identity_admin_audit_immutable() RETURNS trigger LANGUAGE plpgsq
 BEGIN RAISE EXCEPTION 'Identity-admin audit is append-only'; END $$;
 CREATE TRIGGER identity_admin_audit_guard BEFORE UPDATE OR DELETE ON identity_admin_audit
  FOR EACH ROW EXECUTE FUNCTION identity_admin_audit_immutable();
-REVOKE ALL ON identity_admin_grants, identity_admin_audit FROM PUBLIC;
+-- Email changes requested by an identity admin. The address in fellows does not
+-- change until the member confirms from their CURRENT address (so a password-reset
+-- link can never be redirected to an address the admin controls). Only a digest of
+-- the confirmation token is stored. One open request per member.
+CREATE TABLE fellow_email_changes (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ fellow_id uuid NOT NULL REFERENCES fellows(id),
+ old_email text NOT NULL,
+ new_email text NOT NULL CHECK (new_email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
+ token_hash text NOT NULL UNIQUE CHECK (token_hash ~ '^[a-f0-9]{64}$'),
+ requested_by uuid NOT NULL,
+ grant_id uuid NOT NULL,
+ created_at timestamptz NOT NULL DEFAULT now(),
+ expires_at timestamptz NOT NULL CHECK (expires_at > created_at),
+ confirmed_at timestamptz,
+ cancelled_at timestamptz,
+ CHECK (confirmed_at IS NULL OR cancelled_at IS NULL)
+);
+CREATE UNIQUE INDEX fellow_email_change_one_open ON fellow_email_changes(fellow_id)
+ WHERE confirmed_at IS NULL AND cancelled_at IS NULL;
+REVOKE ALL ON identity_admin_grants, identity_admin_audit, fellow_email_changes FROM PUBLIC;
 COMMIT;

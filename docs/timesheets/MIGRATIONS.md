@@ -13,7 +13,7 @@ Merging PR #16 does not run any SQL, and nothing runs automatically at deploy ti
 | 004 | 6 new tables (`timesheet_*`), 6 functions, 2 triggers, 2 indexes | No | **Refused** by a guard, nothing changed |
 | 005 | 3 empty columns on `fellows`: `github_url`, `website_url`, `youtube_url` | No | Safe (`IF NOT EXISTS`) |
 | 007 | 1 function and 1 trigger (24-hour daily limit across projects) | No | **Refused** by a guard, nothing changed |
-| 008 | 2 tables (`identity_admin_grants`, `identity_admin_audit`), 2 functions, 2 triggers, 2 indexes for named account administration ([IDENTITY-ADMIN.md](IDENTITY-ADMIN.md)) | No, and it creates no grant | **Refused** by a guard, nothing changed |
+| 008 | 3 tables (`identity_admin_grants`, `identity_admin_audit`, `fellow_email_changes`), 2 functions, 2 triggers, 3 indexes for named account administration ([IDENTITY-ADMIN.md](IDENTITY-ADMIN.md)) | No, and it creates no grant | **Refused** by a guard, nothing changed |
 
 ## Step 1: Check what is already there (read-only)
 
@@ -78,6 +78,7 @@ It grants only what the code uses:
 | The four functions the code calls | EXECUTE |
 | `identity_admin_grants` | SELECT (only the database owner creates grants) |
 | `identity_admin_audit` and its sequence | SELECT, INSERT, USAGE |
+| `fellow_email_changes` | SELECT, INSERT, UPDATE (requested, then confirmed or cancelled; never deleted) |
 
 There is no DELETE or TRUNCATE on anything, so history stays append-only. The database triggers still block edits to submitted or approved timesheets. The comment at the end of the file shows how to check that the website role already has its usual rights on `fellows`, `projects` and `fellow_projects`.
 

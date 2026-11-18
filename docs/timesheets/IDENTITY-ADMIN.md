@@ -23,18 +23,24 @@ Freezing the shared path entirely (PR #15) stopped HR from adding volunteers, fi
 2. **Explicit grant.** They need an unrevoked, unexpired row in `identity_admin_grants`. There is no web page or API that creates one; the database owner adds it.
 3. **Never handle passwords.** New members and password resets get an unusable random password that nobody sees. The member sets their own with **"Forgot password?"**. A reset also ends the member's current sessions.
 4. **Can't change their own account.** No email, status, password or project/PM role changes on themselves. Another identity admin has to do it.
-5. **Email or status changes end the member's sessions,** so they sign in again.
-6. **No hard deletes.** Members are set to **alumni** instead, which removes their access. This keeps work records and sign-ins attributable.
-7. **Every change is audited.** One row in `identity_admin_audit` records who acted, under which grant, what kind of change, on whom, and when. It also records which fields changed and the new project/PM roles. It never stores passwords, emails or request bodies.
+5. **Emails cannot be redirected (account takeover).** Changing someone's email and then using "Forgot password?" would hand their account to whoever controls the new address. So:
+   - **Sensitive accounts are owner-only.** An identity admin cannot change the email of a PM on any project, a board viewer, another identity admin or a developer, or of someone being made a PM in the same change. The whole request is refused and nothing is saved.
+   - **For every other member, an email change is only a request.** The address does not change, so reset emails keep going to the current address. A confirmation link is sent **to the current address**, and the email changes only when the member opens it and presses **Confirm** (a POST, so mail scanners that open links can't confirm it). Requests expire after 48 hours, and a newer request replaces an older one. Confirming ends the member's work-record sessions and is audited.
+   - If the confirmation email can't be sent, the request is cancelled and the admin is told. Other fields in the same edit are still saved.
+   - **Member lost access to their old address?** An identity admin can't help. The owner changes it after verifying the member another way (see the SQL below).
+6. **A status change ends the member's work-record sessions,** so they sign in again.
+7. **No hard deletes.** Members are set to **alumni** instead, which removes their access. This keeps work records and sign-ins attributable.
+8. **Every change is audited.** One row in `identity_admin_audit` records who acted, under which grant, what kind of change, on whom, and when. It also records which fields changed and the new project/PM roles. It never stores passwords, emails or request bodies.
    - The audit row commits in the same transaction as the change, so there is never a change without an audit row.
    - The audit table is append-only.
-8. **Same-origin requests only** (CSRF protection), and any error fails closed.
+9. **Same-origin requests only** (CSRF protection), and any error fails closed.
 
 ## Database (migration `sql/008_identity_admin.sql`)
 
-008 adds two tables:
+008 adds three tables:
 - `identity_admin_grants`: who, granted by, reason, expiry, one-way revocation. Rows can't be deleted, and only revocation can change a row; both are enforced by a trigger.
 - `identity_admin_audit`: append-only.
+- `fellow_email_changes`: email-change requests (old and new address, a digest of the confirmation token, requester, expiry, confirmed or cancelled). Never deleted.
 
 Granting, revoking or deleting a grant is recorded in the audit table too. 008 needs 004 first and refuses to run twice. Its rollback (`sql/rollback/008_down.sql`) refuses once any grant or audit row exists.
 
@@ -52,6 +58,13 @@ FROM fellows WHERE id = '<fellow id from step 1>' AND status = 'current';
 -- Revoke (takes effect on their next request; history is kept):
 UPDATE identity_admin_grants SET revoked_at = now(), revoked_by = 'Nik Bear Brown'
 WHERE fellow_id = '<fellow id>' AND revoked_at IS NULL;
+
+-- Owner only: change a SENSITIVE account's email (PM, board viewer, identity admin,
+-- developer), or any member who lost their old mailbox, AFTER verifying the person
+-- another way (video call, known phone). Ends their sessions. Must affect exactly 1 row.
+UPDATE fellows SET email = lower('new.address@example.org')
+WHERE id = '<fellow id>' AND status = 'current';
+UPDATE timesheet_sessions SET revoked_at = now() WHERE fellow_id = '<fellow id>' AND revoked_at IS NULL;
 
 -- Review recent changes:
 SELECT a.created_at, actor.name AS by, a.action, target.name AS member, a.detail

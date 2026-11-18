@@ -26,7 +26,7 @@ import { sameOriginMutation } from '@/lib/developer-access-core'
 import { getTimesheetActor, getTimesheetActorFromCookies } from '@/lib/timesheets/session'
 
 export type IdentityAdmin = { fellowId: string; grantId: string; name: string }
-export type IdentityAction = 'create' | 'import' | 'edit' | 'reset-password'
+export type IdentityAction = 'create' | 'import' | 'edit' | 'reset-password' | 'email-change-requested' | 'email-confirmed'
 export type IdentityAccess =
   | { ok: true; admin: IdentityAdmin | null } // admin null: owner path while timesheets are off
   | { ok: false; response: NextResponse }

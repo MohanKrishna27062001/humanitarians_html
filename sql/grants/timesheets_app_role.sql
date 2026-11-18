@@ -48,6 +48,8 @@ BEGIN
   EXECUTE format('GRANT SELECT ON public.identity_admin_grants TO %I', app_role);
   EXECUTE format('GRANT SELECT, INSERT ON public.identity_admin_audit TO %I', app_role);
   EXECUTE format('GRANT USAGE ON SEQUENCE public.identity_admin_audit_id_seq TO %I', app_role);
+  -- Email changes: requested, then confirmed or cancelled (never deleted).
+  EXECUTE format('GRANT SELECT, INSERT, UPDATE ON public.fellow_email_changes TO %I', app_role);
   RAISE NOTICE 'Timesheet grants applied to %.', app_role;
 END $grants$;
 COMMIT;

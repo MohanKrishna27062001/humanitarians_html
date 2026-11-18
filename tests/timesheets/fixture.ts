@@ -30,12 +30,13 @@ neonConfig.fetchFunction = async (
   assert.equal(new URL(String(url)).hostname, "timesheets.invalid");
   const body = JSON.parse(String(init?.body));
   try {
-    const run = async (q: { query: string; params: unknown[] }) => {
-      const r = await db.query(q.query, q.params);
+    type Runner = { query: (sql: string, params?: unknown[]) => Promise<any> };
+    const run = async (q: { query: string; params: unknown[] }, on: Runner = db) => {
+      const r = await on.query(q.query, q.params);
       return {
         fields: r.fields,
         rows: r.rows.map((row: any) =>
-          r.fields.map((field) => {
+          r.fields.map((field: { name: string }) => {
             const v = row[field.name];
             if (v === null || v === undefined) return null;
             // Neon expects PostgreSQL wire timestamps, not ISO T/Z timestamps.
@@ -48,8 +49,16 @@ neonConfig.fetchFunction = async (
         rowCount: r.rows.length,
       };
     };
+    // sql.transaction([...]) arrives as body.queries: run it as one real
+    // transaction, in order, rolled back entirely on any error (as Neon does).
     const result = body.queries
-      ? { results: await Promise.all(body.queries.map(run)) }
+      ? {
+          results: await db.transaction(async (tx) => {
+            const out = [];
+            for (const q of body.queries) out.push(await run(q, tx));
+            return out;
+          }),
+        }
       : await run(body);
     return new Response(JSON.stringify(result), { status: 200 });
   } catch (e: any) {
@@ -61,6 +70,7 @@ neonConfig.fetchFunction = async (
 export async function setupSynthetic() {
   await db.exec(await readFile("sql/001_fellows_projects.sql", "utf8"));
   await db.exec(await readFile("sql/003_project_ledger.sql", "utf8"));
+  await db.exec(await readFile("sql/006_developer_access.sql", "utf8")); // on production already
   await db.exec(await readFile("sql/004_evidence_timesheets.sql", "utf8"));
   await db.exec(await readFile("sql/007_timesheet_daily_total.sql", "utf8"));
   await db.exec(await readFile("sql/008_identity_admin.sql", "utf8"));

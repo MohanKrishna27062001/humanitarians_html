@@ -170,17 +170,18 @@ test("password reset: nobody sees a password, the member's sessions end, audited
   assert.equal((await audit()).at(-1)!.action, "reset-password");
 });
 
-test("email change and PM assignment: sessions end, roles update, audit names the change", async () => {
+test("status change and roles: sessions end, roles update, audit names the change", async () => {
   const cookie = session(actors.fellow);
   assert.equal((await timesheets.GET(request("/api/timesheets", "GET", cookie))).status, 200);
   const res = await edit.PATCH(request("/e", "PATCH", ADMIN(), {
-    email: "changed." + randomUUID() + "@example.org", project_ids: [actors.project], pm_project_id: null,
+    status: "alumni", project_ids: [actors.project], pm_project_id: null,
   }), ctx(actors.fellow));
   assert.equal(res.status, 200);
   assert.equal((await timesheets.GET(request("/api/timesheets", "GET", cookie))).status, 401);
   const row = (await audit()).at(-1)!;
   assert.equal(row.action, "edit");
-  assert.equal(row.detail.email_changed, true);
+  assert.equal(row.detail.status, "alumni");
+  assert.equal(row.detail.email_change_requested, false);
   assert.deepEqual(row.detail.projects, [actors.project]);
   assert.doesNotMatch(JSON.stringify(row.detail), /@/);
 });

@@ -3,11 +3,15 @@ import { sql } from '@/lib/db'
 import { dashboardAccess } from '@/lib/dashboard-auth'
 import { put } from '@vercel/blob'
 import { identityWriteAccess, auditStatement, revokeWorkSessions, resolveTarget, canonicalUuid } from '@/lib/identity-admin'
+import { appBase, emailChangeMail, emailChangeMailer, emailChangeStatements, normalEmail, sensitiveReason, validEmail } from '@/lib/email-change'
+
+const noStore = { 'Cache-Control': 'private, no-store' }
 
 // Edit a member's profile, email, status and project/PM assignments.
 // Timesheets off: owner admin (as before). Timesheets on: a named identity admin,
-// never on their own account; an email or status change ends the member's
-// work-record sessions; the change and its audit row commit together.
+// never on their own account; an email change is only a request the member confirms
+// from their current address, and is refused for sensitive accounts; a status change
+// ends the member's work-record sessions; changes and audit rows commit together.
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -24,17 +28,14 @@ export async function PATCH(
     const id = target.id
     const contentType = req.headers.get('content-type') || ''
     let body: Record<string, unknown>
+    let photo: File | null = null
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData()
       body = Object.fromEntries(formData.entries())
-
-      // Handle photo upload
-      const photo = formData.get('photo') as File | null
-      if (photo && photo.size > 0) {
-        const blob = await put(`fellows/${id}/${photo.name}`, photo, { access: 'public' })
-        body.photo_url = blob.url
-      }
+      // The photo is uploaded only after the checks below pass.
+      const file = formData.get('photo') as File | null
+      if (file && file.size > 0) photo = file
       delete body.photo
 
       // Parse project data from form
@@ -49,21 +50,49 @@ export async function PATCH(
     }
 
     const {
-      name, email, bio, photo_url, status, joined_date,
+      name, email, bio, status, joined_date,
       linkedin_url, employer, employer_role, willing_to_be_contacted,
       project_ids, pm_project_id,
     } = body as Record<string, string | boolean | string[] | null | undefined>
+    let photo_url = body.photo_url as string | null | undefined
 
-    const before = (await sql`SELECT email, status FROM fellows WHERE id = ${id} LIMIT 1`)[0] as { email: string; status: string } | undefined
+    const before = (await sql`SELECT name, email, status FROM fellows WHERE id = ${id} LIMIT 1`)[0] as { name: string; email: string; status: string } | undefined
     if (!before) return NextResponse.json({ error: 'Fellow not found' }, { status: 404 })
 
-    // Update fellow fields
+    // Timesheets on: an identity admin cannot set an email directly (review finding #2).
+    // It becomes a request the member confirms from their current address, and is
+    // refused outright for sensitive accounts (lib/email-change.ts).
+    const requestedEmail = typeof email === 'string' && email.trim() ? normalEmail(email) : null
+    const emailRequest = !!admin && requestedEmail !== null && requestedEmail !== normalEmail(before.email)
+    if (admin && emailRequest && requestedEmail) {
+      if (!validEmail(requestedEmail)) return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400, headers: noStore })
+      const reason = (await sensitiveReason(id)) || (pm_project_id ? 'being made a project manager in this change' : null)
+      if (reason) {
+        return NextResponse.json(
+          { error: `This member is ${reason}. Only the owner can change their email. No changes were saved.` },
+          { status: 403, headers: noStore },
+        )
+      }
+      const taken = await sql`SELECT 1 FROM fellows WHERE lower(email) = ${requestedEmail} AND id <> ${id}::uuid LIMIT 1`
+      if (taken.length) return NextResponse.json({ error: 'A fellow with this email already exists. No changes were saved.' }, { status: 409, headers: noStore })
+      if (!emailChangeMailer.configured()) {
+        return NextResponse.json({ error: 'Email changes need the mail service, which is not configured. No changes were saved.' }, { status: 503, headers: noStore })
+      }
+    }
+
+    if (photo) {
+      const blob = await put(`fellows/${id}/${photo.name}`, photo, { access: 'public' })
+      photo_url = blob.url
+    }
+
+    // Update fellow fields. With an identity admin the email column is never written here.
+    const directEmail = admin ? null : ((email as string) ?? null)
     const statements = [sql`
       UPDATE fellows SET
         name = COALESCE(${name as string ?? null}, name),
-        email = COALESCE(${email as string ?? null}, email),
+        email = COALESCE(${directEmail}, email),
         bio = ${bio as string ?? null},
-        photo_url = COALESCE(${photo_url as string ?? null}, photo_url),
+        photo_url = COALESCE(${photo_url ?? null}, photo_url),
         status = COALESCE(${status as string ?? null}, status),
         joined_date = COALESCE(${joined_date as string ?? null}, joined_date),
         linkedin_url = ${linkedin_url as string ?? null},
@@ -85,19 +114,39 @@ export async function PATCH(
       }
     }
 
+    let token: string | null = null
     if (admin) {
-      const emailChanged = typeof email === 'string' && email !== before.email
       const statusChanged = typeof status === 'string' && status !== before.status
-      if (emailChanged || statusChanged) statements.push(revokeWorkSessions(id))
+      if (statusChanged) statements.push(revokeWorkSessions(id))
+      if (emailRequest && requestedEmail) {
+        const change = emailChangeStatements(admin, id, before.email, requestedEmail)
+        token = change.token
+        statements.push(...change.statements, auditStatement(admin, 'email-change-requested', id))
+      }
       statements.push(auditStatement(admin, 'edit', id, {
-        fields: Object.keys(body).filter((k) => !['project_ids', 'pm_project_id'].includes(k)).sort(),
-        email_changed: emailChanged,
+        fields: Object.keys(body).filter((k) => !['project_ids', 'pm_project_id', 'email'].includes(k)).sort(),
+        email_change_requested: emailRequest,
         status: statusChanged ? status : undefined,
         projects: Array.isArray(project_ids) ? project_ids : undefined,
         pm_project_id: Array.isArray(project_ids) ? (pm_project_id || null) : undefined,
       }))
     }
     await sql.transaction(statements)
+
+    // The confirmation goes to the CURRENT address. If it cannot be sent, the
+    // request is cancelled (the other changes stay saved) and the admin is told.
+    let emailChange: 'pending' | 'not-sent' | undefined
+    if (token && requestedEmail) {
+      let sent = false
+      try {
+        sent = (await emailChangeMailer.send(emailChangeMail(appBase(req.nextUrl.origin), before.name, before.email, requestedEmail, token))) === 'sent'
+      } catch { /* never log addresses, tokens or SMTP responses */ }
+      if (!sent) {
+        await sql`UPDATE fellow_email_changes SET cancelled_at = now()
+          WHERE fellow_id = ${id}::uuid AND confirmed_at IS NULL AND cancelled_at IS NULL`
+      }
+      emailChange = sent ? 'pending' : 'not-sent'
+    }
 
     // Return updated fellow (no password_hash)
     const rows = await sql`
@@ -107,6 +156,14 @@ export async function PATCH(
     `
     if (rows.length === 0) return NextResponse.json({ error: 'Fellow not found' }, { status: 404 })
 
+    if (emailChange === 'pending') {
+      return NextResponse.json({ ...rows[0], email_change: 'pending',
+        email_change_note: 'Saved. The email will change only after the member confirms from their current address.' })
+    }
+    if (emailChange === 'not-sent') {
+      return NextResponse.json({ ...rows[0], email_change: 'not-sent',
+        email_change_note: 'Other changes were saved, but the confirmation email could not be sent, so the email was not changed. Try again later.' }, { status: 502 })
+    }
     return NextResponse.json(rows[0])
   } catch (error: unknown) {
     return NextResponse.json(

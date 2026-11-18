@@ -24,7 +24,8 @@ WITH expected(migration, kind, name) AS (VALUES
   ('008','table','identity_admin_grants'), ('008','table','identity_admin_audit'),
   ('008','index','identity_admin_one_active_grant'), ('008','index','identity_admin_audit_target'),
   ('008','function','identity_admin_grant_history()'), ('008','function','identity_admin_audit_immutable()'),
-  ('008','trigger','identity_admin_grant_guard'), ('008','trigger','identity_admin_audit_guard')
+  ('008','trigger','identity_admin_grant_guard'), ('008','trigger','identity_admin_audit_guard'),
+  ('008','table','fellow_email_changes'), ('008','index','fellow_email_change_one_open')
 ), present AS (
   SELECT migration, name, CASE kind
     WHEN 'table'    THEN to_regclass('public.' || name) IS NOT NULL

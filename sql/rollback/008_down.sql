@@ -8,10 +8,11 @@ DO $guard$ BEGIN
   IF to_regclass('public.identity_admin_grants') IS NULL THEN
     RAISE EXCEPTION '008 is not applied. Nothing was changed.';
   END IF;
-  IF EXISTS (SELECT 1 FROM public.identity_admin_grants) OR EXISTS (SELECT 1 FROM public.identity_admin_audit) THEN
+  IF EXISTS (SELECT 1 FROM public.identity_admin_grants) OR EXISTS (SELECT 1 FROM public.identity_admin_audit)
+     OR EXISTS (SELECT 1 FROM public.fellow_email_changes) THEN
     RAISE EXCEPTION 'Identity-admin grants or audit history exist. Refusing to drop them. Nothing was changed. Revoke grants instead.';
   END IF;
 END $guard$;
-DROP TABLE public.identity_admin_audit, public.identity_admin_grants;
+DROP TABLE public.fellow_email_changes, public.identity_admin_audit, public.identity_admin_grants;
 DROP FUNCTION public.identity_admin_grant_history(), public.identity_admin_audit_immutable();
 COMMIT;
