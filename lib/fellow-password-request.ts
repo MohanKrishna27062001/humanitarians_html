@@ -7,12 +7,19 @@ type Dependencies = {
   createToken: (email: string) => Promise<Reset | null>;
   send: (mail: Mail) => Promise<"sent" | "printed" | "skipped">;
   minutes: number;
+  // Shared limit across server instances (lib/member-login-limit.ts): claim one
+  // email for the address (false = over the limit), or give the claim back.
+  claim: (address: string) => Promise<boolean>;
+  refund: (address: string) => Promise<void>;
 };
-// Best-effort per-instance limit. A shared production limiter remains a rollout
-// prerequisite for broad onboarding. Failed sends never count as successful.
+// The limit is held in the database, so every instance enforces the same count.
+// Over the limit, the reply is the same neutral "accepted" (it does not reveal
+// whether the address exists) and nothing is sent. Failed sends are refunded so
+// they never count. Unknown addresses count too, to slow enumeration. If the
+// limit cannot be checked, the request fails closed. The in-flight set below only
+// stops one instance from sending the same email twice at once.
 export function passwordRequestHandler(deps: Dependencies) {
-  const lastCompleted = new Map<string, number>(),
-    pending = new Set<string>();
+  const pending = new Set<string>();
   return async (req: NextRequest) => {
     const headers = { "Cache-Control": "private, no-store" };
     const unavailable = () =>
@@ -29,7 +36,8 @@ export function passwordRequestHandler(deps: Dependencies) {
         { status: 403, headers },
       );
     let address = "",
-      ownsPending = false;
+      ownsPending = false,
+      claimed = false;
     try {
       const { email } = await req.json();
       address = String(email || "")
@@ -43,8 +51,6 @@ export function passwordRequestHandler(deps: Dependencies) {
       if (!deps.configured()) return unavailable();
       const reply = () =>
         NextResponse.json({ success: true, mail: "accepted" }, { headers });
-      if (Date.now() - (lastCompleted.get(address) || 0) < 60000)
-        return reply();
       if (pending.has(address))
         return NextResponse.json(
           { error: "A request is already in progress. Please wait." },
@@ -52,6 +58,8 @@ export function passwordRequestHandler(deps: Dependencies) {
         );
       pending.add(address);
       ownsPending = true;
+      if (!(await deps.claim(address))) return reply();
+      claimed = true;
       const reset = await deps.createToken(address);
       if (reset) {
         const base =
@@ -66,11 +74,14 @@ export function passwordRequestHandler(deps: Dependencies) {
           text: `Hi ${reset.name},\n\nSomeone asked to reset the password for your Humanitarians AI fellow account.\nOpen this link to choose a new password (it works once and expires in ${deps.minutes} minutes):\n\n${link}\n\nIf this wasn't you, you can ignore this email; your password stays the same.`,
           html: `<p>Hi ${escapeHtml(reset.name)},</p><p>Someone asked to reset the password for your Humanitarians AI fellow account.</p><p><a href="${escapeHtml(link)}">Reset password</a></p><p>The link works once and expires in ${deps.minutes} minutes. If this wasn't you, you can ignore this email; your password stays the same.</p>`,
         });
-        if (result !== "sent") return unavailable();
+        if (result !== "sent") {
+          await deps.refund(address).catch(() => undefined);
+          return unavailable();
+        }
       }
-      lastCompleted.set(address, Date.now());
       return reply();
     } catch (error) {
+      if (claimed) await deps.refund(address).catch(() => undefined);
       const code = (error as { code?: unknown })?.code;
       // Never log token URLs, message bodies, addresses, SMTP responses or secrets.
       console.error("forgot password failed", {

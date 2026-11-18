@@ -25,6 +25,20 @@ const reset = {
   email: "synthetic@example.org",
   name: "Synthetic Fellow",
 };
+// In-memory stand-in for the shared database limit (reset-limit.test.ts tests the
+// real one): at most `max` claims per address; refunds give one back.
+const limit = (max = 3) => {
+  const used = new Map<string, number>();
+  return {
+    claim: async (a: string) => {
+      used.set(a, (used.get(a) || 0) + 1);
+      return used.get(a)! <= max;
+    },
+    refund: async (a: string) => {
+      used.set(a, Math.max(0, (used.get(a) || 0) - 1));
+    },
+  };
+};
 
 test("roster maps active/current and inactive/alumni, rejects ambiguous supplied status", () => {
   for (const v of ["current", "ACTIVE", " active "])
@@ -81,6 +95,7 @@ test("password requests reject cross-site/plain-text input before token or mail 
     },
     send: async () => "sent",
     minutes: 60,
+    ...limit(),
   });
   assert.equal(
     (
@@ -106,6 +121,7 @@ test("unconfigured or skipped mail never claims successful delivery or generates
     },
     send: async () => "sent",
     minutes: 60,
+    ...limit(),
   });
   assert.equal((await missing(req())).status, 503);
   assert.equal(tokens, 0);
@@ -115,6 +131,7 @@ test("unconfigured or skipped mail never claims successful delivery or generates
       createToken: async () => reset,
       send: async () => result,
       minutes: 60,
+      ...limit(),
     });
     assert.equal((await handler(req())).status, 503);
   }
@@ -133,6 +150,7 @@ test("SMTP failure permits immediate retry, successful requests alone enter the 
       return "sent";
     },
     minutes: 60,
+    ...limit(1),
   });
   assert.equal((await handler(req())).status, 503);
   const second = await handler(req());
@@ -156,6 +174,7 @@ test("simultaneous reset requests do not duplicate mail or release another reque
       return "sent";
     },
     minutes: 60,
+    ...limit(),
   });
   const first = handler(req());
   await new Promise((r) => setImmediate(r));
@@ -175,6 +194,7 @@ test("unknown addresses receive the same neutral response and no actual message"
       return "sent";
     },
     minutes: 60,
+    ...limit(),
   });
   const response = await handler(req());
   assert.deepEqual(await response.json(), { success: true, mail: "accepted" });

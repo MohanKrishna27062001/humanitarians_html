@@ -21,19 +21,31 @@ Freezing the shared path entirely (PR #15) stopped HR from adding volunteers, fi
 
 1. **Signed in as themselves.** They use the normal fellow sign-in with their own password. The session ends at sign-out, after 12 hours, or when their password changes.
 2. **Explicit grant.** They need an unrevoked, unexpired row in `identity_admin_grants`. There is no web page or API that creates one; the database owner adds it.
-3. **Never handle passwords.** New members and password resets get an unusable random password that nobody sees. The member sets their own with **"Forgot password?"**. A reset also ends the member's current sessions.
+3. **Never handle passwords.** New members and password resets get an unusable random password that nobody sees. The member sets their own with **"Forgot password?"**. A reset also ends the member's work-record and developer sessions (see [Sessions](#sessions-what-ends-what)).
 4. **Can't change their own account.** No email, status, password or project/PM role changes on themselves. Another identity admin has to do it.
 5. **Emails cannot be redirected (account takeover).** Changing someone's email and then using "Forgot password?" would hand their account to whoever controls the new address. So:
    - **Sensitive accounts are owner-only.** An identity admin cannot change the email of a PM on any project, a board viewer, another identity admin or a developer, or of someone being made a PM in the same change. The whole request is refused and nothing is saved.
-   - **For every other member, an email change is only a request.** The address does not change, so reset emails keep going to the current address. A confirmation link is sent **to the current address**, and the email changes only when the member opens it and presses **Confirm** (a POST, so mail scanners that open links can't confirm it). Requests expire after 48 hours, and a newer request replaces an older one. Confirming ends the member's work-record sessions and is audited.
+   - **For every other member, an email change is only a request.** The address does not change, so reset emails keep going to the current address. A confirmation link is sent **to the current address**, and the email changes only when the member opens it and presses **Confirm** (a POST, so mail scanners that open links can't confirm it). Requests expire after 48 hours, and a newer request replaces an older one. Confirming ends the member's work-record and developer sessions and is audited.
    - If the confirmation email can't be sent, the request is cancelled and the admin is told. Other fields in the same edit are still saved.
    - **Member lost access to their old address?** An identity admin can't help. The owner changes it after verifying the member another way (see the SQL below).
-6. **A status change ends the member's work-record sessions,** so they sign in again.
+6. **A status change ends the member's work-record and developer sessions,** so they sign in again for timesheets.
 7. **No hard deletes.** Members are set to **alumni** instead, which removes their access. This keeps work records and sign-ins attributable.
 8. **Every change is audited.** One row in `identity_admin_audit` records who acted, under which grant, what kind of change, on whom, and when. It also records which fields changed and the new project/PM roles. It never stores passwords, emails or request bodies.
    - The audit row commits in the same transaction as the change, so there is never a change without an audit row.
    - The audit table is append-only.
 9. **Same-origin requests only** (CSRF protection), and any error fails closed.
+
+## Sessions: what ends what
+
+There are three separate sign-in mechanisms. The new controls apply to the first two only.
+
+| Session (cookie) | What it allows | Ends when |
+|---|---|---|
+| **Work record** (`timesheet_session`, server-side, 12 h) | Timesheets; the Ledger while timesheets are on; identity administration | Sign-out, account switch, 12 hours, any password change (including an admin reset), a confirmed email change, a status change by an identity admin |
+| **Developer** (`developer_session`, server-side, 8 h) | The developer dashboard role | Sign-out, 8 hours, grant revoked or expired, any password, email or status change (database trigger from 006) |
+| **Legacy fellow** (`fellow_session`, signed cookie, 30 days, no server record) | The member's own profile page, weekly reports and video submissions; the existing Ledger while timesheets are **off**; Grant opportunities for PMs (either way) | Sign-out in that browser, or after 30 days. **Not** ended by a password reset, email change, status change or grant revocation, because nothing is stored on the server to revoke |
+
+The legacy cookie never authorizes timesheets, the Ledger while timesheets are on, or any account administration; those require a work-record session. To end every legacy cookie at once, for example after a suspected compromise, rotate `FELLOW_SESSION_SECRET` in Vercel and redeploy. That signs every fellow out of the legacy pages, and they sign in again. Making legacy sessions individually revocable would need a server-side session table; that is not part of this PR.
 
 ## Database (migration `sql/008_identity_admin.sql`)
 
@@ -86,7 +98,7 @@ Suggested setup: one or two HR people, each with a 90-day grant, renewed deliber
 - Create with a PM role and CSV import return no password and write one audit row each.
 - The roster is readable.
 - Self-changes are refused, delete returns 409 ("set alumni"), and the record stays.
-- A password reset changes the hash, ends the member's sessions, returns no password and is audited.
+- A password reset changes the hash, ends the member's work-record session, returns no password and is audited.
 - An email change ends sessions, updates roles, and the audit row contains no email address.
 - With timesheets off, a grant on its own does nothing, and the owner path is unchanged.
 
