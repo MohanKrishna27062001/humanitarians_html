@@ -98,6 +98,59 @@ test("an identity admin cannot change their own account, password or roles", asy
   assert.deepEqual((await db.query("SELECT * FROM fellow_projects WHERE fellow_id=$1", [actors.outsider])).rows, before);
 });
 
+// Every spelling of the admin's own ID that PostgreSQL accepts as the same UUID.
+function spellings(id: string) {
+  const hex = id.replace(/-/g, "");
+  const fours = hex.match(/.{4}/g)!.join("-");
+  return [
+    id.toUpperCase(),
+    "{" + id + "}",
+    "{" + id.toUpperCase() + "}",
+    hex,
+    hex.toUpperCase(),
+    fours,
+    "{" + fours + "}",
+    id.slice(0, 9) + id.slice(9).toUpperCase(),
+  ];
+}
+
+test("self-change cannot be bypassed with another spelling of the admin's own ID", async () => {
+  const self = actors.outsider;
+  const variants = spellings(self);
+  // Each variant really is the same UUID to PostgreSQL, so a text comparison would miss it.
+  for (const v of variants) {
+    assert.notEqual(v, self);
+    assert.equal((await db.query<{ same: boolean }>("SELECT $1::uuid = $2::uuid AS same", [v, self])).rows[0].same, true, v);
+  }
+  const state = async () => ({
+    fellow: (await db.query("SELECT email, status, password_hash FROM fellows WHERE id=$1", [self])).rows,
+    roles: (await db.query("SELECT project_id, role FROM fellow_projects WHERE fellow_id=$1 ORDER BY project_id", [self])).rows,
+    audit: (await db.query<{ n: number }>("SELECT count(*)::int AS n FROM identity_admin_audit")).rows[0].n,
+  });
+  const before = await state();
+  for (const v of variants) {
+    const editRes = await edit.PATCH(request("/e", "PATCH", ADMIN(), {
+      email: "takeover@example.org", status: "current",
+      project_ids: [actors.project, actors.otherProject], pm_project_id: actors.project,
+    }), ctx(v));
+    assert.equal(editRes.status, 403, "edit " + v);
+    assert.equal((await reset.PATCH(request("/r", "PATCH", ADMIN()), ctx(v))).status, 403, "reset " + v);
+    assert.equal((await edit.DELETE(request("/d", "DELETE", ADMIN()), ctx(v))).status, 409, "delete " + v);
+  }
+  assert.deepEqual(await state(), before);
+});
+
+test("other members can still be changed through any accepted spelling; malformed IDs are not found", async () => {
+  const other = spellings(actors.fellow)[0];
+  const res = await edit.PATCH(request("/e", "PATCH", ADMIN(), { employer: "Synthetic Org" }), ctx(other));
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).id, actors.fellow);
+  for (const bad of [actors.fellow + "0", "{" + actors.fellow, actors.fellow + "}", "-" + actors.fellow, "not-a-uuid", ""]) {
+    assert.equal((await edit.PATCH(request("/e", "PATCH", ADMIN(), { employer: "x" }), ctx(bad))).status, 404, bad);
+    assert.equal((await reset.PATCH(request("/r", "PATCH", ADMIN()), ctx(bad))).status, 404, bad);
+  }
+});
+
 test("members are marked alumni, never deleted, while timesheets are on", async () => {
   assert.equal((await edit.DELETE(request("/d", "DELETE", ADMIN()), ctx(actors.fellow))).status, 409);
   assert.equal((await db.query<{ n: number }>("SELECT count(*)::int AS n FROM fellows WHERE id=$1", [actors.fellow])).rows[0].n, 1);

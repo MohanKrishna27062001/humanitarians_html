@@ -72,6 +72,35 @@ export async function identityWriteAccess(req: NextRequest, ownerAllowed: () => 
   }
 }
 
+// PostgreSQL accepts one UUID in several spellings: upper case, wrapped in {braces},
+// without hyphens, or with a hyphen after any group of four digits. Comparing the raw
+// route parameter as text would treat "ABC…" and "abc…" as different accounts, so
+// every target ID is reduced to the one canonical form (lower case, 8-4-4-4-12)
+// before any comparison or query. Anything PostgreSQL would not accept is rejected.
+const PG_UUID = /^(\{)?[0-9a-f]{4}(?:-?[0-9a-f]{4}){7}(\})?$/i
+export function canonicalUuid(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const match = PG_UUID.exec(raw)
+  if (!match || Boolean(match[1]) !== Boolean(match[2])) return null
+  const hex = raw.replace(/[{}-]/g, '').toLowerCase()
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
+// Resolves the route's target account. Returns the canonical ID as stored, or a
+// response: 404 for an unknown or malformed ID, 403 when an identity admin targets
+// their own account. The self check compares the ID PostgreSQL itself returns for
+// the target row, so no spelling of the admin's own ID can pass.
+export async function resolveTarget(rawId: string, admin: IdentityAdmin | null): Promise<{ id: string } | { response: NextResponse }> {
+  const id = canonicalUuid(rawId)
+  const notFound = { response: NextResponse.json({ error: 'Fellow not found' }, { status: 404, headers: noStore }) }
+  if (!id) return notFound
+  const rows = await sql`SELECT id::text AS id FROM fellows WHERE id = ${id}::uuid LIMIT 1`
+  if (!rows.length) return notFound
+  const stored = String(rows[0].id)
+  if (admin && (stored === admin.fellowId || id === admin.fellowId)) return { response: selfChangeDenied() }
+  return { id: stored }
+}
+
 export function selfChangeDenied(): NextResponse {
   return NextResponse.json(
     { error: 'You cannot change your own account, status or project roles here. Ask another identity admin.' },

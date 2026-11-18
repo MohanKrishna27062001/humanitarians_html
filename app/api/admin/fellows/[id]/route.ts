@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db'
 import { dashboardAccess } from '@/lib/dashboard-auth'
 import { put } from '@vercel/blob'
-import { identityWriteAccess, auditStatement, revokeWorkSessions, selfChangeDenied } from '@/lib/identity-admin'
+import { identityWriteAccess, auditStatement, revokeWorkSessions, resolveTarget, canonicalUuid } from '@/lib/identity-admin'
 
 // Edit a member's profile, email, status and project/PM assignments.
 // Timesheets off: owner admin (as before). Timesheets on: a named identity admin,
@@ -17,8 +17,11 @@ export async function PATCH(
   const admin = access.admin
 
   try {
-    const { id } = await params
-    if (admin && id === admin.fellowId) return selfChangeDenied()
+    // Canonical target ID (any accepted UUID spelling) and the self-change check,
+    // before the body or any upload is read.
+    const target = await resolveTarget((await params).id, admin)
+    if ('response' in target) return target.response
+    const id = target.id
     const contentType = req.headers.get('content-type') || ''
     let body: Record<string, unknown>
 
@@ -122,7 +125,8 @@ export async function DELETE(
   const admin = access.admin
 
   try {
-    const { id } = await params
+    const id = canonicalUuid((await params).id)
+    if (!id) return NextResponse.json({ error: 'Fellow not found' }, { status: 404 })
     if (admin) {
       // While timesheets are on, members are never hard-deleted: their sign-ins and
       // work records must stay attributable. Setting status to alumni removes access

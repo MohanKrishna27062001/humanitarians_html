@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/db'
 import { dashboardAccess } from '@/lib/dashboard-auth'
 import { hashPassword } from '@/lib/fellow-auth'
-import { identityWriteAccess, auditStatement, revokeWorkSessions, selfChangeDenied, ACTIVATION_NOTE } from '@/lib/identity-admin'
+import { identityWriteAccess, auditStatement, revokeWorkSessions, resolveTarget, ACTIVATION_NOTE } from '@/lib/identity-admin'
 import crypto from 'crypto'
 
 function generateTempPassword(): string {
@@ -22,13 +22,13 @@ export async function PATCH(
   const admin = access.admin
 
   try {
-    const { id } = await params
-    if (admin && id === admin.fellowId) return selfChangeDenied()
+    // Canonical target ID (any accepted UUID spelling) and the self-change check.
+    const target = await resolveTarget((await params).id, admin)
+    if ('response' in target) return target.response
+    const id = target.id
     const tempPassword = generateTempPassword()
     const password_hash = await hashPassword(tempPassword)
 
-    const rows = await sql`SELECT id FROM fellows WHERE id = ${id} LIMIT 1`
-    if (rows.length === 0) return NextResponse.json({ error: 'Fellow not found' }, { status: 404 })
     const statements = [sql`UPDATE fellows SET password_hash = ${password_hash} WHERE id = ${id}`]
     if (admin) statements.push(revokeWorkSessions(id), auditStatement(admin, 'reset-password', id))
     await sql.transaction(statements)
