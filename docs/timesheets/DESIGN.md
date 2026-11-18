@@ -38,13 +38,16 @@ Read scope is in SQL. Exports include all permitted versions, actors, times, att
 
 ## Legacy preservation
 
-`/ledger/legacy` labels old records as manager-reported, not fellow-attested or approved. Assigned supervisors see their own projects; explicit board viewers can see all. Former-member hours and archived projects remain visible. The legacy save endpoint is frozen (410), its old mutation helper removed, and the global fellow-name suggestion list removed. Tables `ledger_entries` and `ledger_updates` are neither migrated nor rewritten.
+`/ledger/legacy` labels old records as manager-reported, not fellow-attested or approved. Assigned supervisors see their own projects; explicit board viewers can see all. Former-member hours and archived projects remain visible. While timesheets are off, the existing Ledger (including saving) works exactly as on `main`; once they are on, the legacy save endpoint is frozen (410) and only the read-only history above is shown. Tables `ledger_entries` and `ledger_updates` are neither migrated nor rewritten.
 
 ## Files
 
 - `sql/004_evidence_timesheets.sql`: additive schema, database invariants, access predicate and atomic commands.
 - `sql/007_timesheet_daily_total.sql`: submission trigger refusing more than 24 hours on one date across a fellow's projects.
-- `lib/timesheets/session.ts`: dedicated expiring/revocable work-record sessions and shared-admin identity-write freeze.
+- Release order and rollback: `MIGRATIONS.md` only.
+- `sql/008_identity_admin.sql`: named, expiring identity-admin grants, append-only audit and member-confirmed email changes.
+- `lib/timesheets/session.ts`: dedicated expiring/revocable work-record sessions.
+- `lib/identity-admin.ts`, `lib/email-change.ts`: account administration while timesheets are on (see `IDENTITY-ADMIN.md`).
 - `lib/timesheets/domain.ts`: duration, date, evidence and entry validation; attestation text.
 - `lib/timesheets/server.ts`: verified actor, private responses, scoped detail/export and mutation adapter.
 - `app/api/timesheets/`: list/create, detail/commands and versioned JSON export.

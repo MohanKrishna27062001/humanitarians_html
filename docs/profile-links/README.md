@@ -1,5 +1,7 @@
 # Four standard profile links — local review checkpoint
 
+> **For the timesheet release (PR #16), `005` is applied as step B4 of [`docs/timesheets/MIGRATIONS.md`](../timesheets/MIGRATIONS.md); that checklist supersedes the standalone steps below.**
+
 Implemented on `codex/ledger-evidence-timesheets`, based on checkpoint `3c1f14a823fdcf422e774271f8880946766182f2`. This change is local and unpublished. Production has not received these fields or their migration. No real profile, account, role, status, password, email or portfolio data was changed.
 
 The fellow's existing profile editor now offers GitHub, LinkedIn, personal website and YouTube channel. All four are optional; none is a signup or account-activation requirement. Blank values clear a link. Saved links appear in the profile preview, public profile and existing fellows directory cards. The form explicitly explains that links are public. There is no custom-link builder or additional-link feature; the separate portfolio tool was not modified.

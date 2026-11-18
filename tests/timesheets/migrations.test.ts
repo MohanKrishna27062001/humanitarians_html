@@ -97,9 +97,8 @@ test("the website role works with exactly the documented grants, and fails witho
   const ids = await seed(db);
   await applyAll(db);
   // A separate website role with today's rights on the existing tables only.
-  await db.exec(`CREATE ROLE site_app NOLOGIN;
-    GRANT SELECT, UPDATE ON fellows, projects, fellow_projects TO site_app;
-    GRANT SELECT ON ledger_entries, ledger_updates TO site_app;`);
+  // A separate website role with NO rights: the grants file alone must be enough.
+  await db.exec("CREATE ROLE site_app NOLOGIN");
   const week = (await db.query<{ w: string }>("SELECT to_char(date_trunc('week', now() AT TIME ZONE 'UTC'),'YYYY-MM-DD') AS w")).rows[0].w;
   const today = (await db.query<{ d: string }>("SELECT to_char((now() AT TIME ZONE 'UTC')::date,'YYYY-MM-DD') AS d")).rows[0].d;
   const command = async (actor: string, sheet: string | null, op: string, body: unknown, expected: number | null) =>
@@ -115,6 +114,11 @@ test("the website role works with exactly the documented grants, and fails witho
   const grants = (await file("sql/grants/timesheets_app_role.sql")).replace("'REPLACE_WITH_APP_ROLE';   -- EDIT", "'site_app';   -- EDIT");
   await db.exec(grants);
   await db.exec(grants); // safe to run twice
+  const check = (await db.query<{ item: string; result: string }>(
+    (await file("sql/checks/app_role_check.sql")).replace("'REPLACE_WITH_APP_ROLE'", "'site_app'"),
+  )).rows;
+  assert.equal(check.length, 10);
+  assert.ok(check.every((r) => r.result === "ok"), JSON.stringify(check));
 
   await db.exec("SET ROLE site_app");
   try {
@@ -207,4 +211,26 @@ test("008 rollback refuses once a grant or audit record exists", async () => {
   await assert.rejects(db.query("UPDATE identity_admin_grants SET expires_at=now()+interval '99 days'"), /immutable/);
   await db.query("UPDATE identity_admin_grants SET revoked_at=now(), revoked_by='Nik'");
   assert.equal((await db.query<{ n: number }>("SELECT count(*)::int AS n FROM identity_admin_audit WHERE action='revoke'")).rows[0].n, 1);
+});
+
+test("the website must not use the table owner: grants refuse it and the check flags it", async () => {
+  const db = await productionToday();
+  await applyAll(db);
+  const owner = (await db.query<{ u: string }>("SELECT current_user AS u")).rows[0].u;
+  const grants = (await file("sql/grants/timesheets_app_role.sql")).replace("'REPLACE_WITH_APP_ROLE';   -- EDIT", `'${owner}';   -- EDIT`);
+  await assert.rejects(db.exec(grants), /owns tables or has admin-level rights/);
+  await db.exec("ROLLBACK");
+  // A role that is a member of the owner role inherits ownership: refused too.
+  await db.exec(`CREATE ROLE owner_member NOLOGIN; GRANT ${owner} TO owner_member;`);
+  await assert.rejects(
+    db.exec((await file("sql/grants/timesheets_app_role.sql")).replace("'REPLACE_WITH_APP_ROLE';   -- EDIT", "'owner_member';   -- EDIT")),
+    /owns tables or has admin-level rights/,
+  );
+  await db.exec("ROLLBACK");
+  const check = (await db.query<{ step: number; result: string }>(
+    (await file("sql/checks/app_role_check.sql")).replace("'REPLACE_WITH_APP_ROLE'", `'${owner}'`),
+  )).rows;
+  assert.equal(check.find((r) => r.step === 2)!.result, "FAIL - stop");
+  assert.equal(check.find((r) => r.step === 3)!.result, "FAIL - stop");
+  assert.equal(check.find((r) => r.step === 8)!.result, "FAIL - stop", "the owner can rewrite history");
 });

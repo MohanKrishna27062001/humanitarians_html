@@ -9,7 +9,7 @@ No staging or production database was used; staging is point 3 and is still pend
 
 | Suite | Command | Result |
 |---|---|---|
-| Timesheets (API, database, security, migrations, identity admin) | `npm run test:timesheets` | **70 / 70 pass** |
+| Timesheets (API, database, security, migrations, identity admin, email changes, reset limit) | `npm run test:timesheets` | **84 / 84 pass** |
 | Developer access | `npm run test:developer-access` | **25 / 25 pass** |
 | Timesheets typecheck | `npm run typecheck:timesheets` | **clean** |
 | Developer-access typecheck | `npm run typecheck:developer-access` | **clean** |
@@ -33,6 +33,7 @@ No staging or production database was used; staging is point 3 and is still pend
 | **Mobile** | Browser: 390 px wide, no horizontal scroll | ✅ `04-mobile-amendment.png` |
 | **Existing ledger access unchanged (point 1)** | Timesheets off: `/api/ledger/projects` works as on `main`. A developer reads it read-only in both modes and can't write | ✅ `access.test.ts` |
 | **Admin permissions (point 2)** | The shared admin password is refused with no side effects. Without a grant, fellows and PMs are refused. A named identity admin can create (incl. PM role), import, edit, change email/roles and reset passwords, never sees a password, can't change their own account, and can't hard-delete; each change is audited. A grant does nothing while timesheets are off | ✅ `identity-admin.test.ts` (10 tests), `security.test.ts` |
+| **Review fixes (Nov 17)** | Self-change bypass with 8 alternate UUID spellings refused (`identity-admin.test.ts`; the test fails on the previous code). Email takeover: sensitive accounts owner-only, other changes confirmed from the current address (`email-change.test.ts`, 5). Reset limit shared across two server instances (`reset-limit.test.ts`, 6). Website role: owner refused, least-privilege check (`migrations.test.ts`, 9) | ✅ |
 | **Developer permissions** | Read-only roster and Ledger; account changes denied; Grants read-only; sessions die on password, email or status change | ✅ `access.test.ts` (25 tests) |
 | **Migrations (point 4)** | Preflight, apply, rerun refused, partial detected, website-role grants (refused without, full flow with), rollback refused with data, down/up when empty, legacy data checksums unchanged | ✅ `migrations.test.ts` (8 tests) |
 

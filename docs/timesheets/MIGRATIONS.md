@@ -1,120 +1,160 @@
-# Timesheet migrations: check, back up, apply, grant, roll back
+# Timesheets release checklist
 
-This covers four database files: `sql/004_evidence_timesheets.sql`, `sql/005_standard_profile_links.sql`, `sql/007_timesheet_daily_total.sql` and `sql/008_identity_admin.sql`.
+**This is the only release procedure for PR #16.** Other documents (`ROLLOUT.md`, the PR description) point here; if anything disagrees with this page, this page wins.
 
-Everything runs in the **Neon SQL Editor**, connected to the **production branch**, as the database owner. That is the role the editor uses by default, and the same role that ran 001–003 and 006. To run a file, open it in GitHub, copy all of it, paste it into the editor and click **Run**. Each file is one transaction: if it fails, nothing is changed.
+The order is fixed: **Part A on staging, then Part B on production**, with Nik's go-ahead between them. Nothing here runs automatically: merging the PR or deploying runs no SQL.
 
-Merging PR #16 does not run any SQL, and nothing runs automatically at deploy time.
+SQL steps run in the **Neon SQL Editor** as the database **owner**. To run a file, open it in GitHub, copy all of it, paste it and click **Run**. Every file is one transaction: if it shows an error, nothing from it was applied; copy the error and stop.
 
-## What each file does
+## The files
 
-| File | Adds | Changes existing data? | Run twice? |
-|---|---|---|---|
-| 004 | 6 new tables (`timesheet_*`), 6 functions, 2 triggers, 2 indexes | No | **Refused** by a guard, nothing changed |
-| 005 | 3 empty columns on `fellows`: `github_url`, `website_url`, `youtube_url` | No | Safe (`IF NOT EXISTS`) |
-| 007 | 1 function and 1 trigger (24-hour daily limit across projects) | No | **Refused** by a guard, nothing changed |
-| 008 | 3 tables (`identity_admin_grants`, `identity_admin_audit`, `fellow_email_changes`), 2 functions, 2 triggers, 3 indexes for named account administration ([IDENTITY-ADMIN.md](IDENTITY-ADMIN.md)) | No, and it creates no grant | **Refused** by a guard, nothing changed |
+| File | Purpose | Run twice? |
+|---|---|---|
+| `sql/checks/timesheets_preflight.sql` | Read-only: what is installed (`not applied` / `applied` / `PARTIAL - stop`), row counts, roles | Any time |
+| `sql/checks/backup_fingerprint.sql` | Read-only: row counts and checksums of existing tables | Any time |
+| `sql/004_evidence_timesheets.sql` | 6 timesheet tables, 6 functions, 2 triggers, 2 indexes | **Refused**, nothing changed |
+| `sql/005_standard_profile_links.sql` | 3 empty profile-link columns on `fellows` | Safe |
+| `sql/007_timesheet_daily_total.sql` | 24-hour daily limit across projects (1 function, 1 trigger) | **Refused**, nothing changed |
+| `sql/008_identity_admin.sql` | Identity-admin grants, audit, email-change requests (3 tables, 2 functions, 2 triggers, 3 indexes); creates no grant | **Refused**, nothing changed |
+| `sql/grants/timesheets_app_role.sql` | Rights for the website's own least-privilege role | Safe |
+| `sql/checks/app_role_check.sql` | Read-only: proves that role is least-privilege | Any time |
+| `sql/rollback/008_down.sql`, `007_down.sql`, `004_down.sql` | Remove the schema, only while unused (they refuse otherwise) | Safe |
 
-## Step 1: Check what is already there (read-only)
+Migrations always run in this order: **004 → 005 → 007 → 008**.
 
-Run `sql/checks/timesheets_preflight.sql` and save the output (a screenshot is fine).
+---
 
-- Every `prerequisite` row must say `ok`.
-- For each migration:
-  - `not applied`: run it in step 3.
-  - `applied`: skip it.
-  - `PARTIAL - stop`: do not continue. Someone created part of it by hand. Send me the output.
-- The two `roles` rows are needed in step 4.
+## Part A: staging (isolated, synthetic data only)
 
-This file only reads. It changes nothing and can be run any number of times.
+**A1. Separate staging environment (Nik).** Nothing in staging may point to production.
 
-## Step 2: Back up, and prove the backup is good
+- A **new Neon database** for staging: a new project, or a schema-only branch. **Not** a copy of production data; no real volunteers, emails or password hashes.
+- Its own **owner** and its own **website role**, created in Neon → Roles, e.g. `staging_app`.
+- In Vercel → Settings → Environment Variables, set these for **Preview only**, each different from production:
 
-1. In the Neon console, go to **Branches**, then **Create branch**.
-   - Parent: `production` (or `main`).
-   - Data: *current point in time*.
-   - Name: `backup-before-timesheets-YYYY-MM-DD`.
-2. Run `sql/checks/backup_fingerprint.sql` on **production**, then switch the editor to the **backup branch** and run it again.
-   - Every row (`row_count` and `checksum`) must match.
-   - If any row differs, stop: the backup is not a good copy.
-3. Keep the production output. Step 5 compares against it.
+  | Variable | Value |
+  |---|---|
+  | `DATABASE_URL` | Connection string of `staging_app` on the staging database |
+  | `FELLOW_SESSION_SECRET` | A new random value |
+  | `ADMIN_PASSWORD` | A new value |
+  | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM` | A **test mail sink**, so no email reaches a real person |
+  | `APP_URL` | The staging/preview URL |
+  | `TIMESHEETS_ENABLED`, `DEVELOPER_ACCESS_ENABLED` | `true` |
 
-Neon also keeps point-in-time history, but this named branch is the backup we have checked.
+- Production's variables stay on **Production only** (untick Preview on every one).
+- Do **not** set `ISOLATED_STAGING_DATABASE` yet.
 
-## Step 3: Apply, in this order
+**A2. Schema.** On the staging database: run the preflight, then 004 → 005 → 007 → 008 (step B4 below explains each), and the preflight again. All four must be `applied`.
+
+**A3. Website role.** Run `sql/grants/timesheets_app_role.sql` with `staging_app`, then `sql/checks/app_role_check.sql` with `staging_app`. All 10 rows must be `ok`.
+
+**A4. Prove the isolation before enabling the preview.**
+
+1. In Vercel, compare the **Preview** and **Production** `DATABASE_URL` values. The host (`ep-…`), the user and the database must all differ, and the Preview user must be `staging_app`.
+2. On staging: `SELECT count(*) FROM fellows WHERE email NOT LIKE '%@example.org';` must return **0**: synthetic accounts only.
+3. Run `sql/checks/backup_fingerprint.sql` on **production** and save the output. Step A7 compares against it.
+4. Only now set `ISOLATED_STAGING_DATABASE=true` (**Preview only**) and authorize the preview deployment on the PR.
+
+**A5. Synthetic data.** Create a few `@example.org` members, two projects, one PM per project, one identity admin and one board viewer. Use the owner SQL from `IDENTITY-ADMIN.md` for the grants.
+
+**A6. Test the deployed preview.**
+
+- Sign-in with real cookies, and a wrong password refused.
+- "Forgot password?" email arrives in the mail sink; at most 3 per address per 15 minutes.
+- Volunteer submits with evidence; PM returns with a reason; volunteer corrects; PM approves.
+- Self-approval and cross-team access refused.
+- Two submissions at the same moment for the same day on two projects: only one passes the 24-hour limit.
+- Identity admin: create a member; reset a password; request an email change, then confirm it from the mail sink; email change for a PM refused.
+- Unsaved-changes prompt.
+
+Record the results in `TEST-REPORT.md`.
+
+**A7. Production untouched.** Run `sql/checks/backup_fingerprint.sql` on production again. It must be identical to A4.3: the preview never wrote to production.
+
+**A8. Restore test (real, on staging).**
+
+1. Note the time.
+2. Submit one more synthetic timesheet.
+3. In Neon, create a branch of staging from the **noted time** (point-in-time restore).
+4. Run `sql/checks/backup_fingerprint.sql` and `SELECT count(*) FROM timesheets;` on that branch and on staging. The branch must show the state **before** the extra timesheet.
+5. Write down how long the restore took. That is the expected recovery time for production.
+
+**A9. Review.** Send Nik the exact commit, the passing CI checks and the staging results. **Part B starts only after his go-ahead.**
+
+---
+
+## Part B: production
+
+**B1. Website role.** In Neon → Roles, create the production website role, e.g. `humanitarians_app`. Keep its connection string private.
+
+**B2. Backup, and prove it is good.**
+
+1. Neon → Branches → Create branch: parent production, *current point in time*, name `backup-before-timesheets-YYYY-MM-DD`.
+2. Run `sql/checks/backup_fingerprint.sql` on production and on the backup branch. Every row must match; otherwise stop.
+3. Keep the production output for B6.
+
+**B3. Preflight.** Run `sql/checks/timesheets_preflight.sql`.
+
+- Every `prerequisite` row must be `ok`.
+- Skip any migration that says `applied`.
+- Stop on any `PARTIAL`.
+
+**B4. Migrations, in this order:**
 
 1. `sql/004_evidence_timesheets.sql`
 2. `sql/005_standard_profile_links.sql`
 3. `sql/007_timesheet_daily_total.sql`
 4. `sql/008_identity_admin.sql`
 
-Skip any file that step 1 reported as `applied`.
+**B5. Website role rights.**
 
-If a file shows an error, nothing from that file was applied. Copy the error message and stop. The guards give plain errors, for example `004 is already applied… Nothing was changed`.
+1. Run `sql/grants/timesheets_app_role.sql` with `humanitarians_app`.
+2. Run `sql/checks/app_role_check.sql` with `humanitarians_app`. All 10 rows must be `ok`.
+3. Only then, in Vercel, set **Production** `DATABASE_URL` to the `humanitarians_app` connection string.
 
-## Step 4: Database grants (only if the website uses a different role)
+The owner's connection string is used only in the SQL editor, never by the website.
 
-Compare the website's role with the table owner:
+**B6. Confirm.**
 
-- The website's role is the user name in Vercel's `DATABASE_URL` (the part before `:`). Don't copy the password anywhere.
-- The table owner is the `owner of table fellows` row from step 1.
+1. The preflight shows all four migrations `applied` and `timesheet data` = `0`.
+2. The fingerprint is identical to B2, except the `fellows` checksum if 005 just added its columns. `fellows (core columns)` must be identical.
 
-**If they are the same role** (the usual Neon setup), skip this step. The owner already has every right it needs.
+**B7. Deploy.** Merge PR #16 and let Vercel deploy. `TIMESHEETS_ENABLED` is still off, so the site behaves as today. Check that sign-in, `/ledger` and the admin dashboard work.
 
-**If they are different:**
-1. Open `sql/grants/timesheets_app_role.sql`.
-2. Replace `REPLACE_WITH_APP_ROLE` with the website's role name.
-3. Run it.
+**B8. Assignments and grants.**
 
-It grants only what the code uses:
+- In the admin dashboard, while timesheets are off: assign each project's PM and add the volunteers.
+- Owner SQL (`IDENTITY-ADMIN.md`): identity-admin grants, and any board viewers.
 
-| Object | Grant |
-|---|---|
-| `timesheet_sessions` | SELECT, INSERT, UPDATE |
-| `timesheets`, `timesheet_versions` | SELECT, INSERT, UPDATE |
-| `timesheet_events`, `timesheet_requests` | SELECT, INSERT |
-| The events sequence | USAGE |
-| `timesheet_board_viewers` | SELECT |
-| The four functions the code calls | EXECUTE |
-| `identity_admin_grants` | SELECT (only the database owner creates grants) |
-| `identity_admin_audit` and its sequence | SELECT, INSERT, USAGE |
-| `fellow_email_changes` | SELECT, INSERT, UPDATE (requested, then confirmed or cancelled; never deleted) |
+**B9. Switch on.** Set `TIMESHEETS_ENABLED=true` (**Production**) and redeploy. Everyone signs in again.
 
-There is no DELETE or TRUNCATE on anything, so history stays append-only. The database triggers still block edits to submitted or approved timesheets. The comment at the end of the file shows how to check that the website role already has its usual rights on `fellows`, `projects` and `fellow_projects`.
+Smoke test with one real PM and one volunteer: submit, then approve.
 
-## Step 5: Confirm
+**B10. Announce.** Tell Nina and the PMs. Keep the B2 backup branch for at least 30 days.
 
-1. Run `sql/checks/timesheets_preflight.sql` again. It must show 004, 005, 007 and 008 as `applied` and `timesheet data` as `0`.
-2. Run `sql/checks/backup_fingerprint.sql` again and compare it with step 2.
-   - Every row must be identical, except `fellows`, whose checksum changes only if 005 added its three empty columns.
-   - `fellows (core columns)` must be identical.
+---
 
-The site keeps working as it does today: `TIMESHEETS_ENABLED` is still off.
+## Rollback, smallest first
 
-## Rolling back, from smallest to largest
-
-1. **Turn the feature off.** Set `TIMESHEETS_ENABLED` to `false` (or remove it) in Vercel and redeploy.
-   - `/ledger` goes back to today's Project Ledger.
-   - No data is touched, and any timesheets already entered are kept.
-   - Use this first for any problem after go-live.
-2. **Remove the schema, only if nobody has used timesheets yet.** With the flag off:
-   - Run `sql/rollback/008_down.sql`, then `sql/rollback/007_down.sql`, then `sql/rollback/004_down.sql`.
-   - 008's rollback refuses once any identity-admin grant or audit row exists, because that is the record of who changed whose access.
-   - 004's rollback refuses, and changes nothing, if any timesheet, version, history row, receipt or board-viewer grant exists. Deleting real work records is a records decision for Nik, not a rollback step.
+1. **Switch off.** Set `TIMESHEETS_ENABLED=false` and redeploy.
+   - `/ledger` returns to today's Project Ledger. No data is touched, and submitted timesheets are kept.
+   - Use this first for any problem.
+2. **Remove the schema, only if nobody has used it.** With the switch off, run `sql/rollback/008_down.sql`, then `007_down.sql`, then `004_down.sql`.
+   - Each refuses, changing nothing, once real records, grants or audit history exist. Deleting those is a records decision for Nik, not a rollback step.
    - Legacy Ledger tables are never touched.
-   - Leave 005 in place. Its columns are empty, harmless and used by the profile pages.
-3. **Restore the backup, only if existing data was damaged.**
-   - In Neon, restore production from `backup-before-timesheets-YYYY-MM-DD`: open the branch, choose **Restore**, then *restore to parent*. Neon keeps a copy of the replaced state.
+   - Leave 005 in place: three empty columns that the profile pages use.
+3. **Restore the backup, only if existing data was damaged.** Restore production from the B2 branch, the same way as in A8.
    - Anything written after the backup is lost, including timesheets. Agree a reconciliation plan with Nik first.
 
-## How this was tested
+## How this procedure is tested
 
-`tests/timesheets/migrations.test.ts` runs these exact files against a fresh PostgreSQL shaped like production (001, 003 and 006 applied). Run it with `npm run test:timesheets`. It checks that:
+`tests/timesheets/migrations.test.ts` runs these exact files on a fresh PostgreSQL shaped like production (001, 003 and 006 applied). It checks:
 
-- The preflight reports `not applied` on today's schema and `applied` afterwards. A half-applied 004 shows as `PARTIAL`.
-- Applying 004 → 005 → 007 → 008 leaves every legacy table's row count and checksum unchanged.
-- Rerunning 004, 007 or 008 is refused and changes nothing, and 007 or 008 before 004 is refused. 005 is safe to rerun.
-- A separate website role cannot use timesheets without the grants. With exactly the documented grants, it can sign in, create, save, submit and approve. It still cannot delete history or grant board access, and the grants file can be run twice.
-- Rollback refuses while records exist. On an empty install, down then up works and legacy tables stay identical.
+- The preflight reports `not applied`, `applied` and `PARTIAL` correctly.
+- 004 → 005 → 007 → 008 leaves every legacy table's checksum unchanged.
+- Rerunning 004, 007 or 008, or running them out of order, is refused.
+- A website role with **no** rights cannot use timesheets. After the grants file alone, it can sign in, create, save, submit and approve, and `app_role_check.sql` shows all `ok`. It still cannot delete history, grant board access or edit the audit.
+- The table owner, and any member of the owner role, are refused by the grants file and flagged by the check.
+- Rollbacks refuse while records exist. On an empty install, down then up works.
 
-Not covered by these tests: running against the real Neon project and restoring a real Neon branch. Step 2's fingerprint comparison checks the backup on the day.
+**Not yet done:** Part A on a real Neon/Vercel staging environment, including the restore test A8.
