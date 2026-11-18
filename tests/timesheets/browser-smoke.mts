@@ -431,14 +431,67 @@ try {
   await expect(page.getByText("draft", { exact: true }).first()).toBeVisible();
   await page.screenshot({ path: out + "/09-daily-limit.png", fullPage: true });
 
-  // "My hours": the fellow's own approved / waiting / returned / draft totals.
+  // "My hours": the fellow's own totals, this month and all time. 1:15 approved
+  // (Demo project v2); drafts: the 1:15 amendment plus the refused 23:00 claim.
   await as(actors.fellow);
   await expect(page.getByRole("heading", { name: "My hours" })).toBeVisible();
+  const hoursRow = (label: RegExp) =>
+    page.getByRole("region", { name: "My hours" }).getByRole("row", { name: label });
+  await expect(hoursRow(/^Approved/)).toHaveText(/Approved\s*1:15\s*1:15/);
+  await expect(hoursRow(/^Waiting for review/)).toHaveText(/0:00\s*0:00/);
+  await expect(hoursRow(/^Returned/)).toHaveText(/0:00\s*0:00/);
+  await expect(hoursRow(/^Draft/)).toHaveText(/24:15\s*24:15/);
   await page.screenshot({ path: out + "/10-my-hours.png", fullPage: true });
+
+  // Unsaved edits are never discarded silently.
+  const hoursField = () => page.getByLabel("Hours (H:MM or decimal)");
+  const unsavedDialog = page.getByRole("alertdialog", { name: "You have unsaved changes" });
+  await open();
+  await hoursField().fill("2:00");
+  await page.getByRole("button", { name: "Back to timesheets", exact: true }).click();
+  await expect(unsavedDialog).toBeVisible();
+  await page.screenshot({ path: out + "/11-unsaved-changes.png", fullPage: true });
+  //  Keep editing: still on the sheet with the typed value.
+  await unsavedDialog.getByRole("button", { name: "Keep editing" }).click();
+  await expect(unsavedDialog).toHaveCount(0);
+  await expect(hoursField()).toHaveValue("2:00");
+  //  The links at the top are guarded too.
+  await page.getByRole("link", { name: "My profile" }).click();
+  await expect(unsavedDialog).toBeVisible();
+  await unsavedDialog.getByRole("button", { name: "Keep editing" }).click();
+  await expect(hoursField()).toHaveValue("2:00");
+  //  Discard: back on the list; the stored value is unchanged.
+  await page.getByRole("button", { name: "Back to timesheets", exact: true }).click();
+  await unsavedDialog.getByRole("button", { name: "Discard changes" }).click();
+  await expect(page.getByRole("heading", { name: "My hours" })).toBeVisible();
+  await open();
+  await expect(hoursField()).toHaveValue("1:15");
+  //  Save draft and leave: stored, then back on the list.
+  await hoursField().fill("1:30");
+  await page.getByRole("button", { name: "Back to timesheets", exact: true }).click();
+  await unsavedDialog.getByRole("button", { name: "Save draft and leave" }).click();
+  await expect(page.getByRole("heading", { name: "My hours" })).toBeVisible();
+  await expect(hoursRow(/^Draft/)).toHaveText(/24:30\s*24:30/);
+  await open();
+  await expect(hoursField()).toHaveValue("1:30");
+  //  Nothing typed: Back leaves at once, no prompt.
+  await page.getByRole("button", { name: "Back to timesheets", exact: true }).click();
+  await expect(unsavedDialog).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "My hours" })).toBeVisible();
+  //  Closing the tab with unsaved edits triggers the browser's own warning.
+  await open();
+  await hoursField().fill("3:00");
+  let warned = false;
+  page.once("dialog", async (dialog) => {
+    warned = dialog.type() === "beforeunload";
+    await dialog.accept();
+  });
+  await page.close({ runBeforeUnload: true });
+  await expect.poll(() => warned).toBe(true);
 
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: real UI + actual API handlers + PostgreSQL; password sign-in (wrong password refused); create/save/attest/submit/return-with-reason/correct/resubmit/review/approve/export/amend; cross-team denial; self-approval hidden in UI and refused by API; 24-hour cross-project limit; My hours; mobile overflow; zero page errors.",
+    "PASS: real UI + actual API handlers + PostgreSQL; password sign-in (wrong password refused); create/save/attest/submit/return-with-reason/correct/resubmit/review/approve/export/amend; cross-team denial; self-approval hidden in UI and refused by API; 24-hour cross-project limit; My hours totals; unsaved-changes prompt (keep/discard/save, guarded links, tab-close warning); mobile overflow; zero page errors.",
   );
 } catch (error) {
   const pages = browser.contexts().flatMap((c) => c.pages());

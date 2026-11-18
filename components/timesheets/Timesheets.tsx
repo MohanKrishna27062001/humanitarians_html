@@ -65,7 +65,14 @@ type Action = (
   body: Record<string, unknown>,
   id?: string,
   expected?: number,
-) => Promise<void>;
+) => Promise<boolean>; // true once the server confirmed and the stored record reloaded
+// What the open sheet has not saved yet (reported by SheetDetail).
+type Unsaved = {
+  draft: boolean; // edited timesheet entries
+  text: boolean; // a typed reason or review note
+  save: (() => Promise<boolean>) | null;
+};
+const NOTHING_UNSAVED: Unsaved = { draft: false, text: false, save: null };
 const input = "border rounded p-2 w-full bg-background";
 const button =
   "border rounded px-4 py-2 disabled:opacity-50 focus-visible:outline focus-visible:outline-2";
@@ -93,6 +100,42 @@ export default function Timesheets() {
   const pending = useRef<{ fingerprint: string; request_id: string } | null>(
     null,
   );
+  // Unsaved-changes guard: leaving an open sheet (Back, the links above, Reload)
+  // asks first instead of silently discarding typed work.
+  const unsaved = useRef<Unsaved>(NOTHING_UNSAVED),
+    leavingConfirmed = useRef(false);
+  const [leaving, setLeaving] = useState<null | { go: () => void }>(null);
+  const hasUnsaved = () => unsaved.current.draft || unsaved.current.text;
+  const guard = (go: () => void) => {
+    if (hasUnsaved()) setLeaving({ go });
+    else go();
+  };
+  const leave = () => {
+    const next = leaving;
+    setLeaving(null);
+    unsaved.current = NOTHING_UNSAVED;
+    leavingConfirmed.current = true;
+    next?.go();
+    leavingConfirmed.current = false;
+  };
+  useEffect(() => {
+    // Closing the tab or typing a new address: the browser's own warning.
+    const warn = (e: BeforeUnloadEvent) => {
+      if (leavingConfirmed.current || !hasUnsaved()) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
+  const away = (href: string) => (e: React.MouseEvent) => {
+    if (!hasUnsaved()) return;
+    e.preventDefault();
+    guard(() => {
+      leavingConfirmed.current = true;
+      window.location.assign(href);
+    });
+  };
   const refresh = async (id?: string) => {
     const [d, s] = await Promise.all([
       read<Index>("/api/timesheets"),
@@ -149,11 +192,13 @@ export default function Timesheets() {
       await refresh(d.id);
       pending.current = null;
       setNotice("Saved. The record below is the stored version.");
+      return true;
     } catch (e) {
       setError(
         (e as Error).message +
           " For a lost connection, retry the same action without changing fields.",
       );
+      return false;
     } finally {
       setBusy(false);
     }
@@ -176,11 +221,11 @@ export default function Timesheets() {
         themselves.
       </p>
       <p>
-        <Link className="underline" href="/ledger/legacy">
+        <Link className="underline" href="/ledger/legacy" onClick={away("/ledger/legacy")}>
           Legacy manager-reported records
         </Link>{" "}
         ·{" "}
-        <Link className="underline" href="/fellows/me">
+        <Link className="underline" href="/fellows/me" onClick={away("/fellows/me")}>
           My profile
         </Link>
       </p>
@@ -190,10 +235,12 @@ export default function Timesheets() {
           <button
             className={button}
             disabled={busy}
-            onClick={() => {
-              setError("");
-              refresh(sheet?.id).catch((e) => setError(e.message));
-            }}
+            onClick={() =>
+              guard(() => {
+                setError("");
+                refresh(sheet?.id).catch((e) => setError(e.message));
+              })
+            }
           >
             Reload stored records
           </button>
@@ -202,6 +249,50 @@ export default function Timesheets() {
       <p role="status" aria-live="polite">
         {busy ? "Working…" : notice}
       </p>
+      {leaving && (
+        <div
+          role="alertdialog"
+          aria-labelledby="unsaved-title"
+          aria-describedby="unsaved-text"
+          className="border-2 border-amber-600 p-4 space-y-3"
+        >
+          <h2 id="unsaved-title" className="text-lg font-semibold">
+            You have unsaved changes
+          </h2>
+          <p id="unsaved-text">
+            {unsaved.current.draft
+              ? "Your timesheet entries are not saved. Save them as a draft, discard them, or keep editing."
+              : "The reason or note you typed is not saved. Discard it, or keep editing."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {unsaved.current.draft && unsaved.current.save && (
+              <button
+                className={button}
+                disabled={busy}
+                onClick={async () => {
+                  // Leave only once the server confirmed the save; on failure
+                  // the error is shown and the edits stay on screen.
+                  const ok = await unsaved.current.save!();
+                  if (ok) leave();
+                  else setLeaving(null);
+                }}
+              >
+                Save draft and leave
+              </button>
+            )}
+            <button className={button} disabled={busy} onClick={leave}>
+              Discard changes
+            </button>
+            <button
+              className={button}
+              autoFocus
+              onClick={() => setLeaving(null)}
+            >
+              Keep editing
+            </button>
+          </div>
+        </div>
+      )}
       {!index && !error && <p>Loading your records…</p>}
       {index && (
         <>
@@ -215,10 +306,12 @@ export default function Timesheets() {
               <button
                 className={button}
                 disabled={busy}
-                onClick={() => {
-                  setSheet(null);
-                  setNotice("");
-                }}
+                onClick={() =>
+                  guard(() => {
+                    setSheet(null);
+                    setNotice("");
+                  })
+                }
               >
                 Back to timesheets
               </button>
@@ -227,6 +320,9 @@ export default function Timesheets() {
                 sheet={sheet}
                 busy={busy}
                 action={action}
+                report={(u) => {
+                  unsaved.current = u;
+                }}
               />
             </>
           ) : (
@@ -399,10 +495,12 @@ function SheetDetail({
   sheet,
   busy,
   action,
+  report,
 }: {
   sheet: Sheet;
   busy: boolean;
   action: Action;
+  report: (unsaved: Unsaved) => void;
 }) {
   const current = sheet.versions.find(
     (v) => v.version === sheet.current_version,
@@ -426,10 +524,11 @@ function SheetDetail({
   };
   const send = (op: string, b: Record<string, unknown>) =>
     action(op, b, sheet.id, sheet.lock_version);
-  const save = async () => {
+  // true only when the server confirmed the save (invalid hours never reach it).
+  const save = async (): Promise<boolean> => {
     try {
       setLocalError("");
-      await send("save", {
+      return await send("save", {
         entries: entries.map(({ hours, ...e }) => ({
           ...e,
           minutes: minutesFromHours(hours),
@@ -438,8 +537,14 @@ function SheetDetail({
       });
     } catch (e) {
       setLocalError((e as Error).message);
+      return false;
     }
   };
+  // Tell the page what is unsaved, so leaving asks first.
+  useEffect(() => {
+    report({ draft: dirty, text: !!(reason.trim() || note.trim()), save: dirty ? save : null });
+    return () => report(NOTHING_UNSAVED);
+  });
   return (
     <section className="space-y-5" aria-labelledby="sheet-heading">
       <h2 id="sheet-heading" className="text-2xl font-semibold">
