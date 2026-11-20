@@ -25,7 +25,29 @@ export default function FellowsPage() {
             Join our global community of talented volunteers dedicated to using AI for humanitarian causes. The Fellows Program offers hands-on experience with cutting-edge AI projects, professional development, and networking opportunities with like-minded innovators committed to positive impact.
           </p>
 
-          <section aria-labelledby="start-here" className="p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
+          {/* Professor Bear is not HR */}
+          <div role="note" aria-labelledby="not-hr-heading" className="p-6 md:p-8 border-2 border-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
+            <h2 id="not-hr-heading" className="flex items-center gap-3 text-2xl font-bold mb-4">
+              <MailX className="w-7 h-7 shrink-0 text-primary" aria-hidden="true" />
+              Professor Bear is not HR
+            </h2>
+            <p className="text-lg mb-4">
+              <strong>Do not email Professor Bear about HR things.</strong> Email HR at{" "}
+              <a href="mailto:hr@humanitarians.ai" className="font-bold underline underline-offset-4 text-foreground hover:text-primary">hr@humanitarians.ai</a>.
+            </p>
+            <ul className="list-disc space-y-2 pl-6 mb-4 text-lg marker:text-primary">
+              <li><strong>Looking for a fellowship, or want to become a Fellow?</strong> Email HR.</li>
+              <li><strong>Need an experience letter?</strong> Email HR.</li>
+              <li><strong>Questions about your agreement, its dates, or your OPT paperwork?</strong> Email HR.</li>
+            </ul>
+            <p>
+              The one exception is a renewal request. It goes to HR and Professor Bear together, with your Project
+              Manager on CC. See{" "}
+              <a href="#requesting-a-renewal" className="underline underline-offset-4 text-foreground hover:text-primary">Requesting a renewal</a>.
+            </p>
+          </div>
+
+          <section aria-labelledby="start-here"className="p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
             <h2 id="start-here" className="scroll-mt-24 text-2xl font-bold mb-4">Start here</h2>
             <ol className="list-decimal space-y-4 pl-6 text-muted-foreground marker:text-primary break-words">
               <li><strong className="text-foreground">Know your Project Manager.</strong> This is the person you report to every week. You&apos;re told who it is when you join your group. CC them on every renewal request. If you&apos;re not sure who it is, email <a href="mailto:hr@humanitarians.ai" className="underline underline-offset-4 text-foreground hover:text-primary">hr@humanitarians.ai</a> before you start work.</li>
