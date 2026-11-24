@@ -40,11 +40,5 @@ export default async function LedgerPage() {
     )
   }
 
-  return (
-    <>
-      <p className="px-4 pt-4 text-sm"><Link href="/ledger/grants" className="underline underline-offset-4">Grant opportunities</Link></p>
-      {developer && !admin && !pm && <p role="status" className="border p-4 m-4">Developer view: internal project information is read-only. Supervisor editing and sign-off require a separate PM assignment.</p>}
-      <LedgerWidget />
-    </>
-  )
+  return <>{developer && !admin && !pm && <p role="status" className="border p-4 m-4">Developer view: internal project information is read-only. Supervisor editing and sign-off require a separate PM assignment.</p>}<LedgerWidget /></>
 }
