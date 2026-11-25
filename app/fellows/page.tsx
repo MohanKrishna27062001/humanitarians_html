@@ -25,12 +25,35 @@ export default function FellowsPage() {
             Join our global community of talented volunteers dedicated to using AI for humanitarian causes. The Fellows Program offers hands-on experience with cutting-edge AI projects, professional development, and networking opportunities with like-minded innovators committed to positive impact.
           </p>
 
-          <section aria-labelledby="start-here" className="p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
+          {/* Professor Bear is not HR */}
+          <div role="note" aria-labelledby="not-hr-heading" className="p-6 md:p-8 border-2 border-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
+            <h2 id="not-hr-heading" className="flex items-center gap-3 text-2xl font-bold mb-4">
+              <MailX className="w-7 h-7 shrink-0 text-primary" aria-hidden="true" />
+              Professor Bear is not HR
+            </h2>
+            <p className="text-lg mb-4">
+              <strong>Do not email Professor Bear about HR things.</strong> Email HR at{" "}
+              <a href="mailto:hr@humanitarians.ai" className="font-bold underline underline-offset-4 text-foreground hover:text-primary">hr@humanitarians.ai</a>.
+            </p>
+            <ul className="list-disc space-y-2 pl-6 mb-4 text-lg marker:text-primary">
+              <li><strong>Looking for a fellowship, or want to become a Fellow?</strong> Email HR.</li>
+              <li><strong>Need an experience letter?</strong> Email HR.</li>
+              <li><strong>Questions about your agreement, its dates, or your OPT paperwork?</strong> Email HR.</li>
+            </ul>
+            <p>
+              The one exception is a renewal request. It goes to HR and Professor Bear together, with your Project
+              Manager on CC. See{" "}
+              <a href="#requesting-a-renewal" className="underline underline-offset-4 text-foreground hover:text-primary">Requesting a renewal</a>.
+            </p>
+          </div>
+
+          <section aria-labelledby="start-here"className="p-6 md:p-8 border border-l-4 border-l-primary rounded-lg bg-muted dark:bg-neutral-900 mb-8">
             <h2 id="start-here" className="scroll-mt-24 text-2xl font-bold mb-4">Start here</h2>
             <ol className="list-decimal space-y-4 pl-6 text-muted-foreground marker:text-primary break-words">
               <li><strong className="text-foreground">Know your Project Manager.</strong> This is the person you report to every week. You&apos;re told who it is when you join your group. CC them on every renewal request. If you&apos;re not sure who it is, email <a href="mailto:hr@humanitarians.ai" className="underline underline-offset-4 text-foreground hover:text-primary">hr@humanitarians.ai</a> before you start work.</li>
               <li><strong className="text-foreground">Set up your fellows folder.</strong> In the <a href={FELLOWS_REPO} className="underline underline-offset-4 text-foreground hover:text-primary">fellows repository</a>, create <code className="text-sm break-all">fellows/first-name-last-initial/</code>. Each piece of work gets its own dated folder inside it: <code className="text-sm break-all">YYYY-MM-DD-slug/</code>.</li>
-              <li><strong className="text-foreground">Document your work every week. It&apos;s your evidence for OPT.</strong> That means 20 hours of documented work, two Brutalist videos, a Frictional log entry in each folder you worked in, and your code committed to your project&apos;s repository. The full list, and why it has to be weekly, is under <a href="#reporting-requirements" className="underline underline-offset-4 text-foreground hover:text-primary">Reporting requirements</a>.</li>
+              <li><strong className="text-foreground">Document your work every week. It&apos;s your evidence for OPT.</strong> That means 20 hours of documented work, two Brutalist videos, a Frictional log entry in each folder you worked in, your code committed to your project&apos;s repository, and your weekly presentation deck. The full list, and why it has to be weekly, is under <a href="#reporting-requirements" className="underline underline-offset-4 text-foreground hover:text-primary">Reporting requirements</a>.</li>
+              <li><strong className="text-foreground">Come to your weekly team meeting prepared.</strong> Meet with your team at least once a week and present your work as an HTML slide deck. Missing meetings and showing up unprepared are not OK. Starting December 1, 2026, upload each week&apos;s deck to your fellows folder.</li>
               <li><strong className="text-foreground">Make every video open from a direct link.</strong> Post each video somewhere it opens from a direct link, and check that anyone with the link can view it.</li>
               <li><strong className="text-foreground">Track your own end date.</strong> Request your renewal at least seven days before your agreement ends. No one will remind you. See <a href="#requesting-a-renewal" className="underline underline-offset-4 text-foreground hover:text-primary">Requesting a renewal</a>.</li>
             </ol>
@@ -125,6 +148,7 @@ export default function FellowsPage() {
                 <li><strong className="text-foreground">Two videos made with Brutalist.</strong> One on any STEM or AI topic you choose, and one progress update on that week&apos;s work. Every week, for your whole fellowship.</li>
                 <li><strong className="text-foreground">Your Frictional log.</strong> A running diary of what you did that week, including what didn&apos;t work. It isn&apos;t graded, but it is required every week. Add a dated entry to the FRICTIONAL.md in every work folder you worked in that week.</li>
                 <li><strong className="text-foreground">Code in the project repository.</strong> If your project has its own GitHub repository, commit your code there as you work, not in one batch at the end. Your fellows folder holds your Frictional log; link from it to the specific commits or pull requests. Code that exists only in the fellows repository, or only on your own machine, doesn&apos;t count as evidence.</li>
+                <li><strong className="text-foreground">Your weekly team meeting and presentation.</strong> Meet with your team at least once a week and present that week&apos;s work as an HTML slide deck. It is common for people to miss meetings and then show up unprepared to present. Here, that is not OK. <strong className="text-foreground">Starting December 1, 2026, upload each weekly presentation deck to your fellows folder</strong>, in its own dated folder (<code className="text-sm break-all">YYYY-MM-DD-slug/</code>) like every other piece of work. Name the file <code className="text-sm">slides.html</code>: the repository skips files named <code className="text-sm">deck*.html</code>, so a file called <code className="text-sm">deck.html</code> will never be committed.</li>
               </ul>
 
               <p className="font-bold mb-3">During your trial month</p>
@@ -180,8 +204,8 @@ export default function FellowsPage() {
                 your personal contribution, and link each result to an artifact.</li>
               <li><strong className="text-foreground">Actual hours for each week:</strong> link dated work records and
                 identify any week below 20 hours or with missing records. A monthly average can hide gaps.</li>
-              <li><strong className="text-foreground">Videos and Frictional logs:</strong> provide direct links to each
-                required video, the relevant <a href="#frictional-logs" className="underline underline-offset-4 hover:text-primary">dated log entry</a>,
+              <li><strong className="text-foreground">Videos, presentation decks and Frictional logs:</strong> provide direct links to each
+                required video, each weekly presentation deck (from December 1, 2026), the relevant <a href="#frictional-logs" className="underline underline-offset-4 hover:text-primary">dated log entry</a>,
                 and supporting work such as commits or pull requests in your project&apos;s repository, documents, review notes, or demonstrations.</li>
               <li><strong className="text-foreground">Your next steps:</strong> a clear research or project plan with
                 specific deliverables and target dates, plus any unresolved issues.</li>
@@ -223,7 +247,7 @@ export default function FellowsPage() {
                     <td className="p-3">[Date range]</td>
                     <td className="p-3">[Hours worked]</td>
                     <td className="p-3">[STEM/AI video] · [Progress video]</td>
-                    <td className="p-3">[Dated log] · [Project-repository commit or pull request, document, or artifact]</td>
+                    <td className="p-3">[Dated log] · [Presentation deck] · [Project-repository commit or pull request, document, or artifact]</td>
                   </tr>
                 </tbody>
               </table>

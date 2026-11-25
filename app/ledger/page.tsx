@@ -21,24 +21,11 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
-// Grant opportunities keep their own access rules (lib/grants-viewer.ts), so the
-// link stays available whether or not timesheets are enabled.
-const grantsLink = (
-  <p className="px-4 pt-4 text-sm">
-    <Link href="/ledger/grants" className="underline underline-offset-4">Grant opportunities</Link>
-  </p>
-)
-
 export default async function LedgerPage() {
   if (process.env.TIMESHEETS_ENABLED === 'true') {
     const fellow = await getTimesheetActorFromCookies()
     if (!fellow || fellow.status !== 'current') redirect('/fellows/login?next=/ledger')
-    return (
-      <>
-        {grantsLink}
-        <Timesheets />
-      </>
-    )
+    return <Timesheets />
   }
 
   const admin = await isAdmin()
@@ -64,11 +51,5 @@ export default async function LedgerPage() {
     )
   }
 
-  return (
-    <>
-      {grantsLink}
-      {developer && !admin && !pm && <p role="status" className="border p-4 m-4">Developer view: internal project information is read-only. Supervisor editing and sign-off require a separate PM assignment.</p>}
-      <LedgerWidget />
-    </>
-  )
+  return <>{developer && !admin && !pm && <p role="status" className="border p-4 m-4">Developer view: internal project information is read-only. Supervisor editing and sign-off require a separate PM assignment.</p>}<LedgerWidget /></>
 }
